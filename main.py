@@ -14,10 +14,13 @@ from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
 import webapp2
 
-# Local imports
-import passwords
+class password(ndb.Model):
+    token = ndb.StringProperty()
 
-BASE_URL = 'https://api.telegram.org/bot' + passwords.telegram_token + '/'
+telegramTokenKey = ndb.Key('password', 5649391675244544)
+telegramToken = telegramTokenKey.get()
+
+BASE_URL = 'https://api.telegram.org/bot' + telegramToken.token + '/'
 
 class MeHandler(webapp2.RequestHandler):
     def get(self):
@@ -115,9 +118,9 @@ class WebhookHandler(webapp2.RequestHandler):
             logging.info('Send response:')
             logging.info(resp)
 
-        # COMMANDS
         if text.startswith('/'):
             
+            # OFFICIAL COMMANDS
             # Check if bot is alive
             if text.startswith('/ping'):
                 reply('Welo')
@@ -127,12 +130,16 @@ class WebhookHandler(webapp2.RequestHandler):
                 answers = ["It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it", "As I see it, yes", "Most likely", "Outlook good", "Yes", "Signs point to yes", "Reply hazy try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again", "Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
                 reply(answers[random.randint(1,8)])
             
+            # Changelog.
+            if text.startswith('/changelog'):
+                reply("1.0: Trasposto nonmaterialbot su piattaforma GCloud, codice disponibile via https://github.com/alexalder/cult-robot")
+            
+            # REPLY COMMANDS
             # Spongebob mock the message the user replied to
             elif text in ['/mock', '/spongemock', '/mockingbob']:
                 reply(mock())
 
-        # OTHER
-
+        # OTHER COMMANDS
         # Classic stream editor
         elif filtersed():
             reply(sed())
