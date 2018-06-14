@@ -142,10 +142,6 @@ class WebhookHandler(webapp2.RequestHandler):
             answers = ['y', 'n']
             reply(random.choice(answers))
 
-        # Welo
-        elif 'welo' in uniformed_text:
-            reply('Welo')
-
         # Private chat answers
         else:
             if (chat_id == fr_id):
