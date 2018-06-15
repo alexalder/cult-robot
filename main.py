@@ -75,7 +75,10 @@ class WebhookHandler(webapp2.RequestHandler):
         # Command handlers
         def filtersed():
             pattern = regex.compile("^s([^a-zÀ-ÿ\s]).*\\1.*\\1.?$", regex.IGNORECASE)   # Check if the message only contains the s/pattern/repl/ syntax, plus match flags at the end. Since only the "i" flag is available for now, we'll match zero or one characters
-            return pattern.match(text)
+            if pattern.match(text):
+                if regex.match(r"^s(?P<delimiter>.)", text) is not None:
+                    return True
+            return False
         
         def filteryn():
             pattern = regex.compile("(^|.*\s+)y\/n\s*$", regex.IGNORECASE)    # y/n can be the only or last pattern in a message
