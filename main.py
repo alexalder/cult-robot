@@ -74,12 +74,14 @@ class WebhookHandler(webapp2.RequestHandler):
         
         # Command handlers
         def filtersed():
-            pattern = regex.compile("^s([^a-zÀ-ÿ\s]).*\\1.*\\1.?$", regex.IGNORECASE)   # Check if the message only contains the s/pattern/repl/ syntax, plus match flags at the end. Since only the "i" flag is available for now, we'll match zero or one characters
-            if pattern.match(text):
-                if regex.match(r"^s(?P<delimiter>.)", text) is not None:
+            try:
+                pattern = regex.compile("^s([^a-zÀ-ÿ\s]).*\\1.*\\1.?$", regex.IGNORECASE)   # Check if the message only contains the s/pattern/repl/ syntax, plus match flags at the end. Since only the "i" flag is available for now, we'll match zero or one characters
+                if pattern.match(text) and sed() is not None:
                     return True
-            return False
-        
+                return False
+            except:
+                return False
+
         def filteryn():
             pattern = regex.compile("(^|.*\s+)y\/n\s*$", regex.IGNORECASE)    # y/n can be the only or last pattern in a message
             return pattern.match(text)
@@ -111,15 +113,18 @@ class WebhookHandler(webapp2.RequestHandler):
 
         # Message send function
         def reply(msg):
-            resp = urllib2.urlopen(BASE_URL + 'sendMessage', urllib.urlencode({
-                'chat_id': str(chat_id),
-                'text': msg.encode('utf-8'),
-                'disable_web_page_preview': 'true',
-                'reply_to_message_id': str(message_id),
-            })).read()
+            try:
+                resp = urllib2.urlopen(BASE_URL + 'sendMessage', urllib.urlencode({
+                    'chat_id': str(chat_id),
+                    'text': msg.encode('utf-8'),
+                    'disable_web_page_preview': 'true',
+                    'reply_to_message_id': str(message_id),
+                })).read()
 
-            logging.info('Send response:')
-            logging.info(resp)
+                logging.info('Send response:')
+                logging.info(resp)
+            except:
+                logging.exception("Exception in reply:")
 
         if text.startswith('/'):
             
