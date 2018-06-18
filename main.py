@@ -112,13 +112,13 @@ class WebhookHandler(webapp2.RequestHandler):
             return(result)
 
         # Message send function
-        def reply(msg):
+        def reply(msg, replying = str(message_id)):
             try:
                 resp = urllib2.urlopen(BASE_URL + 'sendMessage', urllib.urlencode({
                     'chat_id': str(chat_id),
                     'text': msg.encode('utf-8'),
                     'disable_web_page_preview': 'true',
-                    'reply_to_message_id': str(message_id),
+                    'reply_to_message_id': replying,
                 })).read()
 
                 logging.info('Send response:')
@@ -150,7 +150,7 @@ class WebhookHandler(webapp2.RequestHandler):
         # OTHER COMMANDS
         # Classic stream editor
         elif filtersed():
-            reply(sed())
+            reply(sed(), reply_message.get('message_id'))
 
         # Random asnwer between yes or no
         elif filteryn():
