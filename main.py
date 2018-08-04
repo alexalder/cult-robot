@@ -131,7 +131,38 @@ class WebhookHandler(webapp2.RequestHandler):
             # OFFICIAL COMMANDS
             # Check if bot is alive
             if text.startswith('/ping'):
-                reply('Welo')
+                answers = ['Welo', 'Bopo']
+                reply(random.choice(answers))
+            
+            # Baraldigen. Generates Baraldi-like sentences about Donne.
+            if text.startswith('/baraldi'):
+                metaphor1 = ('la marmellata andata a male', 'le scatolette del tonno', 'GNU/Linux', 'Claudio Colavalle', 
+                             'il cazzo di un molestatore seriale', 'gli studenti universitari', 'i negri', 'i gatti nella vasca da bagno',
+                             'i murales', 'i cani di razza', 'una relazione', 
+                             'un livello di metal gear solid 1 per un bimbo di 10 anni che chiede di giocare alla PlayStation al padre camionista',
+                             'la prigione', 'I bucaneve'
+                            )
+                
+                metaphor2 = ('si fanno il pene nuovo', 'ci provano ma', 'sono libere', 'col sotto bianco', 
+                             "Un po' appiccicose, dolciastre, c'è la muffa", 'non mi piacciono', 
+                             'Vanno bene contro un muro, spesso sono il risultato di atti criminali',
+                             'belle in foto', "All'inizio tutto dolce", 'Devi schivare i genitori', 'Se vuoi aprirle devi usare la forza',
+                             'non diresti mai di no'
+                            ) 
+                
+                conjunction = ('ma', 'però', 'e infatti', 'mentre', 'e per questo')
+                
+                metaphor3 = ('non scopano comunque', 'rischi di ferirti', 'non ci riescono', 'sono cornute come GNU',
+                             'e sopra il nero', 'vado avanti a mangiare finché qualcuno non mi ferma',
+                             'anche se catturano per un attimo la tua attenzione preferiresti comunque essere altrove a fare altro',
+                             'nessuno le vuole perché devi pagare e crepano prima', 'oramai hai iniziato e devi finire', 
+                             'non far suonare gli allarmi della crippling', 'a volte stancano'
+                            )
+                
+                
+                reply('Le donne sono come ' + random.choice(metaphor1) + ": " + random.choice(metaphor2) + " " + random.choice(conjunction) + 
+                      " " + random.choice(metaphor3))
+            
             
             # Eightball. Picks a random answer from the possible 20
             if text.startswith('/8ball'):
