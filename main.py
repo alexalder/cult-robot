@@ -12,6 +12,7 @@ import re as regex
 # Standard app engine imports
 from google.appengine.api import urlfetch
 from google.appengine.ext import ndb
+from google.appengine.ext import deferred
 import webapp2
 
 class password(ndb.Model):
@@ -37,6 +38,18 @@ class SetWebhookHandler(webapp2.RequestHandler):
         if url:
             self.response.write(json.dumps(json.load(urllib2.urlopen(BASE_URL + 'setWebhook', urllib.urlencode({'url': url})))))
 
+def send(msg, chat_id):
+    try:
+        resp = urllib2.urlopen(BASE_URL + 'sendMessage', urllib.urlencode({
+                                                                          'chat_id': str(chat_id),
+                                                                          'text': msg.encode('utf-8'),
+                                                                          'parse_mode': 'Markdown',
+                                                                          'disable_web_page_preview': 'true',
+                                                                          })).read()
+        logging.info('send message:')
+        logging.info(resp)
+    except Exception as e: logging.error(e)
+    return
 
 class WebhookHandler(webapp2.RequestHandler):
     def post(self):
@@ -131,8 +144,37 @@ class WebhookHandler(webapp2.RequestHandler):
             # OFFICIAL COMMANDS
             # Check if bot is alive
             if text.startswith('/ping'):
-                reply('Welo')
-            
+                answers = ['Welo', 'Bopo']
+                reply(random.choice(answers))
+        
+            # Baraldigen. Generates Baraldi-like sentences about Donne.
+            if text.startswith('/baraldi'):
+                metaphor1 = ('la marmellata andata a male', 'le scatolette del tonno', 'GNU/Linux', 'Claudio Colavalle',
+                             'il cazzo di un molestatore seriale', 'gli studenti universitari', 'i negri', 'i gatti nella vasca da bagno',
+                             'i murales', 'i cani di razza', 'una relazione',
+                             'un livello di metal gear solid 1 per un bimbo di 10 anni che chiede di giocare alla PlayStation al padre camionista',
+                             'la prigione', 'I bucaneve'
+                             )
+                
+                metaphor2 = ('si fanno il pene nuovo', 'ci provano ma', 'sono libere', 'col sotto bianco',
+                             "Un po' appiccicose, dolciastre, c'è la muffa", 'non mi piacciono',
+                             'Vanno bene contro un muro, spesso sono il risultato di atti criminali',
+                             'belle in foto', "All'inizio tutto dolce", 'Devi schivare i genitori', 'Se vuoi aprirle devi usare la forza',
+                             'non diresti mai di no'
+                             )
+                    
+                conjunction = ('ma', 'però', 'e infatti', 'mentre', 'e per questo')
+                             
+                metaphor3 = ('non scopano comunque', 'rischi di ferirti', 'non ci riescono', 'sono cornute come GNU',
+                            'e sopra il nero', 'vado avanti a mangiare finché qualcuno non mi ferma',
+                            'anche se catturano per un attimo la tua attenzione preferiresti comunque essere altrove a fare altro',
+                            'nessuno le vuole perché devi pagare e crepano prima', 'oramai hai iniziato e devi finire',
+                            'non far suonare gli allarmi della crippling', 'a volte stancano'
+                            )
+                             
+                reply('Le donne sono come ' + random.choice(metaphor1) + ": " + random.choice(metaphor2) + " " + random.choice(conjunction) +
+                        " " + random.choice(metaphor3))
+
             # Eightball. Picks a random answer from the possible 20
             if text.startswith('/8ball'):
                 answers = ["It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it", "As I see it, yes", "Most likely", "Outlook good", "Yes", "Signs point to yes", "Reply hazy try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again", "Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
@@ -162,10 +204,32 @@ class WebhookHandler(webapp2.RequestHandler):
             if (chat_id == fr_id):
                 reply('Ho ricevuto il messaggio ma non so come rispondere')
 
+#Called at 5:00 every day
+class BopoHandler(webapp2.RequestHandler):
+    def get(self):
+        urlfetch.set_default_fetch_deadline(60)
+        try:
+            #TO DO delay = random.randint(10, 7200)
+            #deferred.defer(send, "Bopo", -1001073393308, _countdown=delay)
+            send("BOPO", -1001073393308)
+        except Exception, e:
+            logging.error(e)
+
+#Called at 18:00 every day
+class PeakHandler(webapp2.RequestHandler):
+    def get(self):
+        urlfetch.set_default_fetch_deadline(60)
+        try:
+            if (datetime.datetime.today().weekday() == 0):
+                send34('MUSIC MONDAY')
+        except Exception, e:
+            logging.error(e)
 
 app = webapp2.WSGIApplication([
     ('/me', MeHandler),
     ('/updates', GetUpdatesHandler),
     ('/set_webhook', SetWebhookHandler),
     ('/webhook', WebhookHandler),
+    ('/bopo', BopoHandler),
+    ('/peak', PeakHandler),
 ], debug=True)

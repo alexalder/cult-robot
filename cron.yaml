@@ -1,0 +1,10 @@
+cron:
+- description: bopo
+  url: /bopo
+  schedule: every day 05:00
+  timezone: Europe/Rome
+- description: peak
+  url: /peak
+  schedule: every day 18:00
+  timezone: Europe/Rome
+
