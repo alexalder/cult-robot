@@ -149,44 +149,9 @@ class WebhookHandler(webapp2.RequestHandler):
             
             # Baraldigen. Generates Baraldi-like sentences about Donne.
             if text.startswith('/baraldi'):
-                metaphor1 = ('la marmellata andata a male', 'le scatolette del tonno', 'GNU/Linux', 'Claudio Colavalle', 
-                             'il cazzo di un molestatore seriale', 'gli studenti universitari', 'i negri', 'i gatti nella vasca da bagno',
-                             'i murales', 'i cani di razza', 'una relazione', 
-                             'un livello di metal gear solid 1 per un bimbo di 10 anni che chiede di giocare alla PlayStation al padre camionista',
-                             'la prigione', 'I bucaneve', 'un cestino della spazzatura', 'i gatti di raphy alle 5 di notte', 'Reonda', 'Ciocca con Nicole'
-                             'nik che speiga ai clienti cos\'è un bottone', 'la caffeina', 'le multe', 'sfogliare quattroruote al cesso', 
-                             'sborrare su uno scoiattolo'
-                            )
-                
-                metaphor2 = ('si fanno il pene nuovo', 'ci provano', 'sono libere', 'col sotto bianco', 
-                             "Un po' appiccicose, dolciastre, c'è la muffa", 'non mi piacciono', 
-                             'Vanno bene contro un muro, spesso sono il risultato di atti criminali',
-                             'belle in foto', 'All\'inizio tutto dolce', 'Devi schivare i genitori', 'Se vuoi aprirle devi usare la forza',
-                             'non diresti mai di no', 'le vuoi uccidere tutte', 'buone', 'dico che schifo i radiohead', 
-                             'hai la cacca e preme sulla prostata e hai una mezza erezione e ti segheresti',
-                             '"mi piace mettere il cazzo in quella fessura apposita che fa un po\' di attrito" e ti dicono è la figa',
-                             'prima di tutto devi prenderle, poi devi farlo senza chiederti troppo perché',
-                             'ti dicono "scusa ma cerco una storia seria"'
-                            ) 
-                
-                conjunction = ('ma', 'però', 'e infatti', 'mentre', 'e per questo', 'e')
-                
-                metaphor3 = ('non scopano comunque', 'rischi di ferirti', 'non ci riescono', 'sono cornute come GNU',
-                             'sopra il nero', 'vado avanti a mangiare finché qualcuno non mi ferma',
-                             'anche se catturano per un attimo la tua attenzione preferiresti comunque essere altrove a fare altro',
-                             'nessuno le vuole perché devi pagare e crepano prima', 'oramai hai iniziato e devi finire', 
-                             'non far suonare gli allarmi della crippling', 'a volte stancano', 'suca claudio lol',
-                             '..no niente scusate ho provato a farla ma non mi viene in mente nulla', 'fanno venire ansia' , 
-                             'la società non le aiuta abbastanza ad arricchirsi', 'ma poi ascolto gabry ponte', 
-                             'Cloud mi fa il verso in modo stra accurato', 'comunque cazzo che schifo', 
-                             'era un glory hole nel muro in cartongesso in quell b&b a Costigliole Saluzzo',
-                             'quando inizi a chiederti perché ti senti vuoto e meno divertito', 'dici che schifo',
-                             'non puoi fare quello che vuoi fino alla fine, e quando puoi farlo, finisce tutto',
-                             'la sera dopo stanno scopando chad'
-                            )
-                
-                
-                reply('Le donne sono come ' + random.choice(metaphor1) + ": " + random.choice(metaphor2) + " " + random.choice(conjunction) + " " + random.choice(metaphor3))
+                bar = json.load(open("baraldi.json"))
+                reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) + 
+                      " " + random.choice(bar["conjunction"]) + " " +random.choice(bar["metaphor3"])
                 
                 
             # Eightball. Picks a random answer from the possible 20
