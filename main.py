@@ -151,7 +151,7 @@ class WebhookHandler(webapp2.RequestHandler):
             if text.startswith('/baraldi'):
                 bar = json.load(open("baraldi.json"))
                 reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) + 
-                      " " + random.choice(bar["conjunction"]) + " " +random.choice(bar["metaphor3"])
+                      " " + random.choice(bar["conjunction"]) + " " +random.choice(bar["metaphor3"]))
                 
                 
             # Eightball. Picks a random answer from the possible 20
