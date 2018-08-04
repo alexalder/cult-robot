@@ -175,13 +175,13 @@ class WebhookHandler(webapp2.RequestHandler):
                              'sopra il nero', 'vado avanti a mangiare finché qualcuno non mi ferma',
                              'anche se catturano per un attimo la tua attenzione preferiresti comunque essere altrove a fare altro',
                              'nessuno le vuole perché devi pagare e crepano prima', 'oramai hai iniziato e devi finire', 
-                             'non far suonare gli allarmi della crippling', 'a volte stancano', 'suca claudio lol'
-                             '..no niente scusate ho provato a farla ma non mi viene in mente nulla', 'fanno venire ansia'  
-                             'la società non le aiuta abbastanza ad arricchirsi', 'ma poi ascolto gabry ponte', \
+                             'non far suonare gli allarmi della crippling', 'a volte stancano', 'suca claudio lol',
+                             '..no niente scusate ho provato a farla ma non mi viene in mente nulla', 'fanno venire ansia' , 
+                             'la società non le aiuta abbastanza ad arricchirsi', 'ma poi ascolto gabry ponte', 
                              'Cloud mi fa il verso in modo stra accurato', 'comunque cazzo che schifo', 
-                             'era un glory hole nel muro in cartongesso in quell b&b a Costigliole Saluzzo'
-                             'quando inizi a chiederti perché ti senti vuoto e meno divertito', 'dici che schifo'
-                             'non puoi fare quello che vuoi fino alla fine, e quando puoi farlo, finisce tutto'
+                             'era un glory hole nel muro in cartongesso in quell b&b a Costigliole Saluzzo',
+                             'quando inizi a chiederti perché ti senti vuoto e meno divertito', 'dici che schifo',
+                             'non puoi fare quello che vuoi fino alla fine, e quando puoi farlo, finisce tutto',
                              'la sera dopo stanno scopando chad'
                             )
                 
