@@ -149,7 +149,7 @@ class WebhookHandler(webapp2.RequestHandler):
             
             # Baraldigen. Generates Baraldi-like sentences about Donne.
             if text.startswith('/baraldi'):
-                bar = json.load(open("baraldi.json"))
+                bar = json.load(open("baraldi.json"), encoding='utf-8')
                 reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) + 
                       " " + random.choice(bar["conjunction"]) + " " +random.choice(bar["metaphor3"]))
                 
