@@ -200,7 +200,7 @@ class PeakHandler(webapp2.RequestHandler):
         urlfetch.set_default_fetch_deadline(60)
         try:
             if (datetime.datetime.today().weekday() == 0):
-                send34('MUSIC MONDAY')
+                send('MUSIC MONDAY')
         except Exception, e:
             logging.error(e)
 
