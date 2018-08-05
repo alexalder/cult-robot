@@ -153,7 +153,6 @@ class WebhookHandler(webapp2.RequestHandler):
                 reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) + 
                       " " + random.choice(bar["conjunction"]) + " " +random.choice(bar["metaphor3"]))
                 
-                
             # Eightball. Picks a random answer from the possible 20
             if text.startswith('/8ball'):
                 answers = ["It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it", "As I see it, yes", "Most likely", "Outlook good", "Yes", "Signs point to yes", "Reply hazy try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again", "Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
@@ -163,7 +162,17 @@ class WebhookHandler(webapp2.RequestHandler):
             if text.startswith('/changelog'):
                 reply("1.0: Trasposto nonmaterialbot su piattaforma GCloud, codice disponibile via https://github.com/alexalder/cult-robot")
             
+            
+
             # REPLY COMMANDS
+            # Pin the message Petta replied to.
+            if text.startswith('/pin') and int(fr_id) = 178593329:
+                pin = message.get('reply_to_message').get('message_id')                    
+                urllib2.urlopen(BASE_URL + 'pinChatMessage', urllib.urlencode({
+                                                                          'chat_id': str(chat_id),
+                                                                          'message_id': str(pin),
+                                                                          'disable_notification': 'true',})).read()
+                
             # Spongebob mock the message the user replied to
             elif text in ['/mock', '/spongemock', '/mockingbob']:
                 reply(mock())
@@ -200,7 +209,7 @@ class PeakHandler(webapp2.RequestHandler):
         urlfetch.set_default_fetch_deadline(60)
         try:
             if (datetime.datetime.today().weekday() == 0):
-                send('MUSIC MONDAY')
+                send('MUSIC MONDAY', -1001073393308)
         except Exception, e:
             logging.error(e)
 
