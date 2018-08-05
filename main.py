@@ -166,8 +166,11 @@ class WebhookHandler(webapp2.RequestHandler):
 
             # REPLY COMMANDS
             # Pin the message Petta replied to.
-            if text.startswith('/pin') and int(fr_id) == 178593329:
-                pin = message.get('reply_to_message').get('message_id')                    
+            if text.startswith('/pin ') and int(fr_id) == 178593329:
+                try:
+                    pin = message.get('reply_to_message').get('message_id')      
+                except Exception:
+                    reply("Rispondi a un messaggio, silly petta!")
                 urllib2.urlopen(BASE_URL + 'pinChatMessage', urllib.urlencode({
                                                                           'chat_id': str(chat_id),
                                                                           'message_id': str(pin),
