@@ -166,7 +166,7 @@ class WebhookHandler(webapp2.RequestHandler):
 
             # REPLY COMMANDS
             # Pin the message Petta replied to.
-            if text.startswith('/pin ') and int(fr_id) == 178593329:
+            if text == '/pin' and int(fr_id) == 178593329:
                 try:
                     pin = message.get('reply_to_message').get('message_id')      
                 except Exception:
