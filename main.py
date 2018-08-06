@@ -144,6 +144,7 @@ class WebhookHandler(webapp2.RequestHandler):
 
         if text.startswith('/'):
             
+            
             # OFFICIAL COMMANDS
             # Check if bot is alive.
             if text.startswith('/ping'):
@@ -166,7 +167,6 @@ class WebhookHandler(webapp2.RequestHandler):
                 reply("1.0: Trasposto nonmaterialbot su piattaforma GCloud, codice disponibile via https://github.com/alexalder/cult-robot")
             
             
-
             # REPLY COMMANDS
             # Pin the message Petta replied to.
             if text == '/pin' and int(fr_id) == 178593329:
@@ -184,6 +184,7 @@ class WebhookHandler(webapp2.RequestHandler):
             if text in ['/mock', '/spongemock', '/mockingbob']:
                 reply(mock())
     
+    
         # OTHER COMMANDS
         # Classic stream editor.
         elif filtersed():
@@ -198,6 +199,7 @@ class WebhookHandler(webapp2.RequestHandler):
         else:
             if (chat_id == fr_id):
                 reply('Ho ricevuto il messaggio ma non so come rispondere')
+
 
 # Called at 5:00 every day.
 class BopoHandler(webapp2.RequestHandler):
