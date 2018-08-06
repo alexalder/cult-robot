@@ -9,6 +9,7 @@ import urllib
 import urllib2
 import re as regex
 import datetime
+import time
 
 # Standard app engine imports
 from google.appengine.api import urlfetch
@@ -39,6 +40,7 @@ class SetWebhookHandler(webapp2.RequestHandler):
         if url:
             self.response.write(json.dumps(json.load(urllib2.urlopen(BASE_URL + 'setWebhook', urllib.urlencode({'url': url})))))
 
+#Returns the sent message as JSON
 def send(msg, chat_id):
     try:
         resp = urllib2.urlopen(BASE_URL + 'sendMessage', urllib.urlencode({
@@ -50,7 +52,7 @@ def send(msg, chat_id):
         logging.info('send message:')
         logging.info(resp)
     except Exception as e: logging.error(e)
-    return
+    return resp
 
 class WebhookHandler(webapp2.RequestHandler):
     def post(self):
@@ -125,7 +127,7 @@ class WebhookHandler(webapp2.RequestHandler):
                 result = regex.sub(sub[1], sub[2], reply_text)                            # else just sub normally
             return(result)
 
-        # Message send function
+        # Quick message reply function.
         def reply(msg, replying = str(message_id)):
             try:
                 resp = urllib2.urlopen(BASE_URL + 'sendMessage', urllib.urlencode({
@@ -143,7 +145,7 @@ class WebhookHandler(webapp2.RequestHandler):
         if text.startswith('/'):
             
             # OFFICIAL COMMANDS
-            # Check if bot is alive
+            # Check if bot is alive.
             if text.startswith('/ping'):
                 answers = ['Welo', 'Bopo']
                 reply(random.choice(answers))
@@ -154,7 +156,7 @@ class WebhookHandler(webapp2.RequestHandler):
                 reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) + 
                       " " + random.choice(bar["conjunction"]) + " " +random.choice(bar["metaphor3"]))
                 
-            # Eightball. Picks a random answer from the possible 20
+            # Eightball. Picks a random answer from the possible 20.
             if text.startswith('/8ball'):
                 answers = ["It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it", "As I see it, yes", "Most likely", "Outlook good", "Yes", "Signs point to yes", "Reply hazy try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again", "Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
                 reply(answers[random.randint(1,8)])
@@ -178,26 +180,26 @@ class WebhookHandler(webapp2.RequestHandler):
                     reply("Rispondi a un messaggio, silly petta!")
                 
                 
-            # Spongebob mock the message the user replied to
-            elif text in ['/mock', '/spongemock', '/mockingbob']:
+            # Spongebob mock the message the user replied to.
+            if text in ['/mock', '/spongemock', '/mockingbob']:
                 reply(mock())
-
+    
         # OTHER COMMANDS
-        # Classic stream editor
+        # Classic stream editor.
         elif filtersed():
             reply(sed(), reply_message.get('message_id'))
 
-        # Random asnwer between yes or no
+        # Random asnwer between yes or no.
         elif filteryn():
             answers = ['y', 'n']
             reply(random.choice(answers))
 
-        # Private chat answers
+        # Private chat answers.
         else:
             if (chat_id == fr_id):
                 reply('Ho ricevuto il messaggio ma non so come rispondere')
 
-#Called at 5:00 every day
+# Called at 5:00 every day.
 class BopoHandler(webapp2.RequestHandler):
     def get(self):
         urlfetch.set_default_fetch_deadline(60)
@@ -208,13 +210,24 @@ class BopoHandler(webapp2.RequestHandler):
         except Exception, e:
             logging.error(e)
 
-#Called at 18:00 every day
+# Called at 18:00 every day.
 class PeakHandler(webapp2.RequestHandler):
     def get(self):
         urlfetch.set_default_fetch_deadline(60)
         try:
+            # Music Monday.
             if (datetime.datetime.today().weekday() == 0):
-                send('MUSIC MONDAY', -1001073393308)
+                query = urllib2.urlopen(BASE_URL + 'getChat', urllib.urlencode({
+                                                                                  'chat_id': str(chat_id),
+                                                                                  })).read()
+                thischat = json.loads(query)
+                alert = send('MUSIC MONDAY', -1001073393308)
+                # Pins the alert only if there's no current pinned message or it is older than a working day.
+                if (thischat.get('result').get('pinned_message') is None or (time.mktime(datetime.datetime.now().timetuple()) - thischat.get('result').get('pinned_message').get('date')) > 54000):
+                    urllib2.urlopen(BASE_URL + 'pinChatMessage', urllib.urlencode({
+                                                                                  'chat_id': str(chat_id),
+                                                                                  'message_id': str(json.loads(alert).get('result').get('message_id')),
+                                                                                  'disable_notification': 'true',})).read()
         except Exception, e:
             logging.error(e)
 
