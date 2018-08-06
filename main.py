@@ -189,7 +189,7 @@ class WebhookHandler(webapp2.RequestHandler):
         elif filtersed():
             reply(sed(), reply_message.get('message_id'))
 
-        # Random asnwer between yes or no.
+        # Random answer between yes or no.
         elif filteryn():
             answers = ['y', 'n']
             reply(random.choice(answers))
