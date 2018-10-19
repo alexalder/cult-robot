@@ -25,6 +25,9 @@ telegramToken = telegramTokenKey.get()
 
 BASE_URL = 'https://api.telegram.org/bot' + telegramToken.token + '/'
 
+
+
+
 class MeHandler(webapp2.RequestHandler):
     def get(self):
         urlfetch.set_default_fetch_deadline(60)
@@ -51,8 +54,15 @@ def send(msg, chat_id):
                                                                           })).read()
         logging.info('send message:')
         logging.info(resp)
-    except Exception as e: logging.error(e)
+    except Exception as e: log(e)
     return resp
+
+
+#Logs the errors.
+def log(e):
+    logging.error(e)
+    send("ERROR!:" + e,-1001229811735)
+
 
 class WebhookHandler(webapp2.RequestHandler):
     def post(self):
@@ -116,7 +126,8 @@ class WebhookHandler(webapp2.RequestHandler):
                         c = c.upper() if last_was_upper else c.lower()
                         swap_chance += (1-swap_chance)*diversity_bias
                     out += c
-            return(out)
+            
+                return(out)
 
         def sed():
             m = regex.match(r"^s(?P<delimiter>.)", text)
@@ -139,7 +150,7 @@ class WebhookHandler(webapp2.RequestHandler):
 
                 logging.info('Send response:')
                 logging.info(resp)
-            except:
+            except Exception:
                 logging.exception("Exception in reply:")
 
         if text.startswith('/'):
@@ -210,7 +221,7 @@ class BopoHandler(webapp2.RequestHandler):
             #deferred.defer(send, "Bopo", -1001073393308, _countdown=delay)
             send("BOPO", -1001073393308)
         except Exception, e:
-            logging.error(e)
+            log(e)
 
 # Called at 18:00 every day.
 class PeakHandler(webapp2.RequestHandler):
@@ -231,7 +242,10 @@ class PeakHandler(webapp2.RequestHandler):
                                                                                   'message_id': str(json.loads(alert).get('result').get('message_id')),
                                                                                   'disable_notification': 'true',})).read()
         except Exception, e:
-            logging.error(e)
+            log(e)
+
+            
+            
 
 app = webapp2.WSGIApplication([
     ('/me', MeHandler),
