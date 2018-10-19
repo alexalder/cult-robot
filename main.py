@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
 
 # Base imports
-import StringIO
+import io
 import json
 import logging
 import random
-import urllib
-import urllib2
+import urllib.request, urllib.parse, urllib.error
+import urllib.request, urllib.error, urllib.parse
 import re as regex
 import datetime
 import time
@@ -31,22 +31,22 @@ BASE_URL = 'https://api.telegram.org/bot' + telegramToken.token + '/'
 class MeHandler(webapp2.RequestHandler):
     def get(self):
         urlfetch.set_default_fetch_deadline(60)
-        self.response.write(json.dumps(json.load(urllib2.urlopen(BASE_URL + 'getMe'))))
+        self.response.write(json.dumps(json.load(urllib.request.urlopen(BASE_URL + 'getMe'))))
 class GetUpdatesHandler(webapp2.RequestHandler):
     def get(self):
         urlfetch.set_default_fetch_deadline(60)
-        self.response.write(json.dumps(json.load(urllib2.urlopen(BASE_URL + 'getUpdates'))))
+        self.response.write(json.dumps(json.load(urllib.request.urlopen(BASE_URL + 'getUpdates'))))
 class SetWebhookHandler(webapp2.RequestHandler):
     def get(self):
         urlfetch.set_default_fetch_deadline(60)
         url = self.request.get('url')
         if url:
-            self.response.write(json.dumps(json.load(urllib2.urlopen(BASE_URL + 'setWebhook', urllib.urlencode({'url': url})))))
+            self.response.write(json.dumps(json.load(urllib.request.urlopen(BASE_URL + 'setWebhook', urllib.parse.urlencode({'url': url})))))
 
 #Returns the sent message as JSON
 def send(msg, chat_id):
     try:
-        resp = urllib2.urlopen(BASE_URL + 'sendMessage', urllib.urlencode({
+        resp = urllib.request.urlopen(BASE_URL + 'sendMessage', urllib.parse.urlencode({
                                                                           'chat_id': str(chat_id),
                                                                           'text': msg.encode('utf-8'),
                                                                           'parse_mode': 'Markdown',
@@ -141,7 +141,7 @@ class WebhookHandler(webapp2.RequestHandler):
         # Quick message reply function.
         def reply(msg, replying = str(message_id)):
             try:
-                resp = urllib2.urlopen(BASE_URL + 'sendMessage', urllib.urlencode({
+                resp = urllib.request.urlopen(BASE_URL + 'sendMessage', urllib.parse.urlencode({
                     'chat_id': str(chat_id),
                     'text': msg.encode('utf-8'),
                     'disable_web_page_preview': 'true',
@@ -183,7 +183,7 @@ class WebhookHandler(webapp2.RequestHandler):
             if text == '/pin' and int(fr_id) == 178593329:
                 try:
                     pin = message.get('reply_to_message').get('message_id')
-                    urllib2.urlopen(BASE_URL + 'pinChatMessage', urllib.urlencode({
+                    urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
                                                                           'chat_id': str(chat_id),
                                                                           'message_id': str(pin),
                                                                           'disable_notification': 'true',})).read()
@@ -220,7 +220,7 @@ class BopoHandler(webapp2.RequestHandler):
             #TO DO delay = random.randint(10, 7200)
             #deferred.defer(send, "Bopo", -1001073393308, _countdown=delay)
             send("BOPO", -1001073393308)
-        except Exception, e:
+        except Exception as e:
             log(e)
 
 # Called at 18:00 every day.
@@ -230,18 +230,18 @@ class PeakHandler(webapp2.RequestHandler):
         try:
             # Music Monday.
             if (datetime.datetime.today().weekday() == 0):
-                query = urllib2.urlopen(BASE_URL + 'getChat', urllib.urlencode({
+                query = urllib.request.urlopen(BASE_URL + 'getChat', urllib.parse.urlencode({
                                                                                   'chat_id': str(chat_id),
                                                                                   })).read()
                 thischat = json.loads(query)
                 alert = send('MUSIC MONDAY', -1001073393308)
                 # Pins the alert only if there's no current pinned message or it is older than a working day.
                 if (thischat.get('result').get('pinned_message') is None or (time.mktime(datetime.datetime.now().timetuple()) - thischat.get('result').get('pinned_message').get('date')) > 54000):
-                    urllib2.urlopen(BASE_URL + 'pinChatMessage', urllib.urlencode({
+                    urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
                                                                                   'chat_id': str(chat_id),
                                                                                   'message_id': str(json.loads(alert).get('result').get('message_id')),
                                                                                   'disable_notification': 'true',})).read()
-        except Exception, e:
+        except Exception as e:
             log(e)
 
             
