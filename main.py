@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 # Base imports
-import io
+import os
 import json
 import logging
 import random
@@ -10,6 +10,7 @@ import re as regex
 import datetime
 import time
 import sys
+import requests
 
 # Standard app engine imports
 from flask import Flask, render_template, request
@@ -25,24 +26,29 @@ BASE_URL = 'https://api.telegram.org/bot' + passwords.telegram_token + '/'
 # Logging
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
+
 def log(e):
     logging.error(e)
-    send("ERROR!:" + e,-1001229811735)
+    send("ERROR!:" + e, -1001229811735)
+
 
 # Telegram webhook handling
 @app.route('/me')
 def me_handler():
     return json.dumps(json.load(urllib.request.urlopen(BASE_URL + 'getMe')))
 
+
 @app.route('/updates')
 def updates_handler():
     return json.dumps(json.load(urllib.request.urlopen(BASE_URL + 'getUpdates')))
+
 
 @app.route('/set_webhook')
 def set_webhook():
     url = request.values.get('url')
     if url:
         return json.dumps(json.load(urllib.request.urlopen(BASE_URL + 'setWebhook', urllib.parse.urlencode({'url': url}).encode("utf-8"))))
+
 
 # Returns the sent message as JSON
 def send(msg, chat_id):
@@ -55,7 +61,23 @@ def send(msg, chat_id):
                                                                           }).encode("utf-8")).read()
         logging.info('send message:')
         logging.info(resp)
-    except Exception as e: log(e)
+    except Exception as e:
+        log(e)
+    return resp
+
+
+def send_image(photo, chat_id, reply_to=None):
+    try:
+        resp = urllib.request.urlopen(BASE_URL + 'sendPhoto', urllib.parse.urlencode({
+                                                                                     'chat_id': str(chat_id),
+                                                                                     'photo': photo,
+                                                                                     'parse_mode': 'Markdown',
+                                                                                     'reply_to_message_id': reply_to,
+                                                                                     }).encode("utf-8")).read()
+        logging.info('send message:')
+        logging.info(resp)
+    except Exception as e:
+        log(e)
     return resp
 
 
@@ -93,9 +115,12 @@ def webhook_handler():
             reply_text = message.get('reply_to_message').get('text')
     
     # Command handlers
+
+    # Check if the message only contains the s/pattern/repl/ syntax, plus match flags at the end.
+    # Since only the "i" flag is available for now, we'll match zero or one characters.
     def filtersed():
         try:
-            pattern = regex.compile("^s([^a-zÀ-ÿ\s]).*\\1.*\\1.?$", regex.IGNORECASE)   # Check if the message only contains the s/pattern/repl/ syntax, plus match flags at the end. Since only the "i" flag is available for now, we'll match zero or one characters
+            pattern = regex.compile("^s([^a-zÀ-ÿ\s]).*\\1.*\\1.?$", regex.IGNORECASE)
             if pattern.match(text) and sed() is not None:
                 return True
             return False
@@ -103,7 +128,7 @@ def webhook_handler():
             return False
 
     def filteryn():
-        pattern = regex.compile("(^|.*\s+)y\/n\s*$", regex.IGNORECASE)    # y/n can be the only or last pattern in a message
+        pattern = regex.compile("(^|.*\s+)y\/n\s*$", regex.IGNORECASE)  # y/n can be the only or last pattern in a message
         return pattern.match(text)
 
     def mock(diversity_bias=0.5, random_seed=None):
@@ -121,7 +146,7 @@ def webhook_handler():
                     swap_chance += (1-swap_chance)*diversity_bias
                 out += c
         
-            return(out)
+            return out
 
     def sed():
         m = regex.match(r"^s(?P<delimiter>.)", text)
@@ -130,10 +155,10 @@ def webhook_handler():
             result = regex.sub(sub[1], sub[2], reply_text, flags=regex.IGNORECASE)    # if "i" is after the last delimiter, sub by ignoring case
         else:
             result = regex.sub(sub[1], sub[2], reply_text)                            # else just sub normally
-        return(result)
+        return result
 
     # Quick message reply function.
-    def reply(msg, replying = str(message_id)):
+    def reply(msg, replying=str(message_id)):
         try:
             resp = urllib.request.urlopen(BASE_URL + 'sendMessage', urllib.parse.urlencode({
                 'chat_id': str(chat_id),
@@ -148,8 +173,7 @@ def webhook_handler():
             logging.exception("Exception in reply:")
 
     if text.startswith('/'):
-        
-        
+
         # OFFICIAL COMMANDS
         # Check if bot is alive.
         if text.startswith('/ping'):
@@ -160,18 +184,34 @@ def webhook_handler():
         if text.startswith('/baraldi'):
             bar = json.load(open("baraldi.json"), encoding='utf-8')
             reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) +
-                  " " + random.choice(bar["conjunction"]) + " " +random.choice(bar["metaphor3"]))
+                  " " + random.choice(bar["conjunction"]) + " " + random.choice(bar["metaphor3"]))
         
         # Eightball. Picks a random answer from the possible 20.
         if text.startswith('/8ball'):
-            answers = ["It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it", "As I see it, yes", "Most likely", "Outlook good", "Yes", "Signs point to yes", "Reply hazy try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again", "Don't count on it", "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
-            reply(answers[random.randint(1,8)])
+            answers = ["It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it", "As I see it, yes", "Most likely", "Outlook good", "Yes",
+                       "Signs point to yes", "Reply hazy try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again", "Don't count on it",
+                       "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
+            reply(answers[random.randint(1, 8)])
+    
+        # TapMusic. Sends a collage based on the user's weekly Last.fm charts.
+        if text.startswith('/tapmusic'):
+            if len(text.split()) >= 2:
+                username = text.split()[1]
+                img_data = requests.get("http://tapmusic.net/collage.php?user=" + username + "&type=7day&size=5x5&caption=true&playcount=true").content
+                with open('/tmp/image_name.jpg', 'wb+') as handler:
+                    handler.write(img_data)
+                    url = BASE_URL + "sendPhoto"
+                files = {'photo': open('/tmp/image_name.jpg', 'rb')}
+                data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
+                requests.post(url, files=files, data=data)
         
         # Changelog.
         if text.startswith('/changelog'):
-            reply("1.0: Trasposto nonmaterialbot su piattaforma GCloud, codice disponibile via https://github.com/alexalder/cult-robot")
+            reply('''1.0: Trasposto nonmaterialbot su piattaforma GCloud, codice disponibile via https://github.com/alexalder/cult-robot\n
+                1.1: Aggiunto generatore frasi Baraldi, handler orari di punta e notturno
+                2.0: Portato il bot al runtime 3.7
+                  ''')
 
-        
         # REPLY COMMANDS
         # Pin the message Petta replied to.
         if text == '/pin' and int(fr_id) == 178593329:
@@ -180,15 +220,13 @@ def webhook_handler():
                 urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
                                                                       'chat_id': str(chat_id),
                                                                       'message_id': str(pin),
-                                                                      'disable_notification': 'true',}).encode("utf-8")).read()
+                                                                      'disable_notification': 'true', }).encode("utf-8")).read()
             except Exception:
                 reply("Rispondi a un messaggio, silly petta!")
 
-            
-        # Spongebob mock the message the user replied to.
+        # Spongebob mocks the message the user replied to.
         if text in ['/mock', '/spongemock', '/mockingbob']:
             reply(mock())
-
 
     # OTHER COMMANDS
     # Classic stream editor.
@@ -202,7 +240,7 @@ def webhook_handler():
 
     # Private chat answers.
     else:
-        if (chat_id == fr_id):
+        if chat_id == fr_id:
             reply('Ho ricevuto il messaggio ma non so come rispondere')
 
     return json.dumps(body)
@@ -212,28 +250,29 @@ def webhook_handler():
 @app.route('/bopo')
 def bopo_handler():
     try:
-        #TO DO delay = random.randint(10, 7200)
-        #deferred.defer(send, "Bopo", -1001073393308, _countdown=delay)
+        # TO DO delay = random.randint(10, 7200)
+        # deferred.defer(send, "Bopo", -1001073393308, _countdown=delay)
         send("BOPO", -1001073393308)
     except Exception as e:
         log(e)
+
 
 # Called at 18:00 every day.
 @app.route('/peak')
 def peak_handler():
     try:
         # Music Monday.
-        if (datetime.datetime.today().weekday() == 0):
+        if datetime.datetime.today().weekday() == 0:
             query = urllib.request.urlopen(BASE_URL + 'getChat', urllib.parse.urlencode({
                                                                               'chat_id': str(chat_id),
                                                                               }).encode("utf-8")).read()
             thischat = json.loads(query)
             alert = send('MUSIC MONDAY', -1001073393308)
             # Pins the alert only if there's no current pinned message or it is older than a working day.
-            if (thischat.get('result').get('pinned_message') is None or (time.mktime(datetime.datetime.now().timetuple()) - thischat.get('result').get('pinned_message').get('date')) > 54000):
+            if thischat.get('result').get('pinned_message') is None or (time.mktime(datetime.datetime.now().timetuple()) - thischat.get('result').get('pinned_message').get('date')) > 54000:
                 urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
                                                                               'chat_id': str(chat_id),
                                                                               'message_id': str(json.loads(alert).get('result').get('message_id')),
-                                                                              'disable_notification': 'true',}).encode("utf-8")).read()
+                                                                              'disable_notification': 'true', }).encode("utf-8")).read()
     except Exception as e:
         log(e)
