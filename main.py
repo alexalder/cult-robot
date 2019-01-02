@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 
 # Base imports
-import os
 import json
 import logging
 import random
@@ -17,11 +16,15 @@ from flask import Flask, render_template, request
 
 # Locals
 import passwords
+import changelog
+from cultassistant import CultTextAssistant
 
 # Configuration
 app = Flask(__name__)
 
 BASE_URL = 'https://api.telegram.org/bot' + passwords.telegram_token + '/'
+
+assistant = CultTextAssistant()
 
 # Logging
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -62,21 +65,7 @@ def send(msg, chat_id):
         logging.info('send message:')
         logging.info(resp)
     except Exception as e:
-        log(e)
-    return resp
-
-
-def send_image(photo, chat_id, reply_to=None):
-    try:
-        resp = urllib.request.urlopen(BASE_URL + 'sendPhoto', urllib.parse.urlencode({
-                                                                                     'chat_id': str(chat_id),
-                                                                                     'photo': photo,
-                                                                                     'parse_mode': 'Markdown',
-                                                                                     'reply_to_message_id': reply_to,
-                                                                                     }).encode("utf-8")).read()
-        logging.info('send message:')
-        logging.info(resp)
-    except Exception as e:
+        resp = "Error"
         log(e)
     return resp
 
@@ -157,6 +146,35 @@ def webhook_handler():
             result = regex.sub(sub[1], sub[2], reply_text)                            # else just sub normally
         return result
 
+    def askgoogle(query):
+        display_text = assistant.assist(text_query=query)
+        if display_text is None:
+            reply("Non so rispondere, bopo")
+        else:
+            reply(display_text)
+
+    def tapmusic(tapusername):
+        try:
+            img_data = requests.get("http://tapmusic.net/collage.php?user=" + tapusername + "&type=7day&size=5x5&caption=true&playcount=true").content
+            with open('/tmp/image_name.jpg', 'wb+') as handler:
+                handler.write(img_data)
+                url = BASE_URL + "sendPhoto"
+            files = {'photo': open('/tmp/image_name.jpg', 'rb')}
+            data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
+            requests.post(url, files=files, data=data)
+        except Exception:
+            reply("Errore nella gestione del comando")
+
+    def pinreply():
+        try:
+            pin = message.get('reply_to_message').get('message_id')
+            urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
+                'chat_id': str(chat_id),
+                'message_id': str(pin),
+                'disable_notification': 'true', }).encode("utf-8")).read()
+        except Exception:
+            reply("Rispondi a un messaggio, silly petta!")
+
     # Quick message reply function.
     def reply(msg, replying=str(message_id)):
         try:
@@ -181,51 +199,33 @@ def webhook_handler():
             reply(random.choice(answers))
     
         # Baraldigen. Generates Baraldi-like sentences about Donne.
-        if text.startswith('/baraldi'):
-            bar = json.load(open("baraldi.json"), encoding='utf-8')
+        elif text.startswith('/baraldi'):
+            bar = json.load(open("textdatabase.json"), encoding='utf-8')
             reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) +
                   " " + random.choice(bar["conjunction"]) + " " + random.choice(bar["metaphor3"]))
         
         # Eightball. Picks a random answer from the possible 20.
-        if text.startswith('/8ball'):
-            answers = ["It is certain", "It is decidedly so", "Without a doubt", "Yes definitely", "You may rely on it", "As I see it, yes", "Most likely", "Outlook good", "Yes",
-                       "Signs point to yes", "Reply hazy try again", "Ask again later", "Better not tell you now", "Cannot predict now", "Concentrate and ask again", "Don't count on it",
-                       "My reply is no", "My sources say no", "Outlook not so good", "Very doubtful"]
-            reply(answers[random.randint(1, 8)])
+        elif text.startswith('/8ball'):
+            database = json.load(open("textdatabase.json"), encoding='utf-8')
+            reply(random.choice(database["8ball"]))
     
         # TapMusic. Sends a collage based on the user's weekly Last.fm charts.
-        if text.startswith('/tapmusic'):
-            if len(text.split()) >= 2:
-                username = text.split()[1]
-                img_data = requests.get("http://tapmusic.net/collage.php?user=" + username + "&type=7day&size=5x5&caption=true&playcount=true").content
-                with open('/tmp/image_name.jpg', 'wb+') as handler:
-                    handler.write(img_data)
-                    url = BASE_URL + "sendPhoto"
-                files = {'photo': open('/tmp/image_name.jpg', 'rb')}
-                data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
-                requests.post(url, files=files, data=data)
-        
+        elif text.startswith('/tapmusic'):
+                if len(text.split()) >= 2:
+                    tapusername = text.split()[1]
+                    tapmusic(tapusername)
+
         # Changelog.
-        if text.startswith('/changelog'):
-            reply('''1.0: Trasposto nonmaterialbot su piattaforma GCloud, codice disponibile via https://github.com/alexalder/cult-robot\n
-                1.1: Aggiunto generatore frasi Baraldi, handler orari di punta e notturno
-                2.0: Portato il bot al runtime 3.7
-                  ''')
+        elif text.startswith('/changelog'):
+            reply(changelog.logString)
 
         # REPLY COMMANDS
         # Pin the message Petta replied to.
-        if text == '/pin' and int(fr_id) == 178593329:
-            try:
-                pin = message.get('reply_to_message').get('message_id')
-                urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
-                                                                      'chat_id': str(chat_id),
-                                                                      'message_id': str(pin),
-                                                                      'disable_notification': 'true', }).encode("utf-8")).read()
-            except Exception:
-                reply("Rispondi a un messaggio, silly petta!")
+        elif text == '/pin' and int(fr_id) == 178593329:
+            pinreply()
 
         # Spongebob mocks the message the user replied to.
-        if text in ['/mock', '/spongemock', '/mockingbob']:
+        elif text in ['/mock', '/spongemock', '/mockingbob']:
             reply(mock())
 
     # OTHER COMMANDS
@@ -237,6 +237,10 @@ def webhook_handler():
     elif filteryn():
         answers = ['y', 'n']
         reply(random.choice(answers))
+
+    elif uniformed_text.startswith(("cultbot", "cultrobot", "cult bot", "cult robot")):
+        if len(text.split('ot', 1)) == 2:
+            askgoogle(text.split('ot', 1)[1])
 
     # Private chat answers.
     else:
@@ -264,14 +268,14 @@ def peak_handler():
         # Music Monday.
         if datetime.datetime.today().weekday() == 0:
             query = urllib.request.urlopen(BASE_URL + 'getChat', urllib.parse.urlencode({
-                                                                              'chat_id': str(chat_id),
+                                                                              'chat_id': str(-1001073393308),
                                                                               }).encode("utf-8")).read()
             thischat = json.loads(query)
             alert = send('MUSIC MONDAY', -1001073393308)
             # Pins the alert only if there's no current pinned message or it is older than a working day.
             if thischat.get('result').get('pinned_message') is None or (time.mktime(datetime.datetime.now().timetuple()) - thischat.get('result').get('pinned_message').get('date')) > 54000:
                 urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
-                                                                              'chat_id': str(chat_id),
+                                                                              'chat_id': str(-1001073393308),
                                                                               'message_id': str(json.loads(alert).get('result').get('message_id')),
                                                                               'disable_notification': 'true', }).encode("utf-8")).read()
     except Exception as e:

@@ -1,0 +1,11 @@
+{
+  "project_id": "cult-robot",
+  "device_model_id": "cult-robot-telegram",
+  "manifest": {
+    "manufacturer": "Bopo",
+    "product_name": "Telegram-bot",
+    "device_description": "The official Cult Telegram bot"
+  },
+  "device_type": "action.devices.types.LIGHT",
+  "traits": ["action.devices.traits.OnOff"]
+}

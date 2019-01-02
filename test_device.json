@@ -1,0 +1,6 @@
+{
+  "id": "cult-robot-telegram-app",
+  "model_id": "cult-robot-telegram",
+  "nickname": "CultRobotTelegram",
+  "client_type": "SDK_SERVICE"
+}
