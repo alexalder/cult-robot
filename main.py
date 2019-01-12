@@ -158,7 +158,7 @@ def webhook_handler():
             img_data = requests.get("http://tapmusic.net/collage.php?user=" + tapusername + "&type=7day&size=5x5&caption=true&playcount=true").content
             with open('/tmp/image_name.jpg', 'wb+') as handler:
                 handler.write(img_data)
-                url = BASE_URL + "sendPhoto"
+            url = BASE_URL + "sendPhoto"
             files = {'photo': open('/tmp/image_name.jpg', 'rb')}
             data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
             requests.post(url, files=files, data=data)
@@ -174,6 +174,29 @@ def webhook_handler():
                 'disable_notification': 'true', }).encode("utf-8")).read()
         except Exception:
             reply("Rispondi a un messaggio, silly petta!")
+
+    def getavatar(user_id):
+        query = urllib.request.urlopen(BASE_URL + 'getUserProfilePhotos', urllib.parse.urlencode({
+            'user_id': str(user_id),
+        }).encode("utf-8")).read()
+        answer = json.loads(query).get("result")
+        #photo_number = answer.get('total_count')
+        last_photo = answer.get('photos')[0][0].get('file_id')
+        return last_photo
+
+    def sendphoto(file_id, reply_to=None):
+        try:
+            resp = urllib.request.urlopen(BASE_URL + 'sendPhoto', urllib.parse.urlencode({
+                'chat_id': str(chat_id),
+                'photo': file_id,
+                'parse_mode': 'Markdown',
+                'reply_to_message_id': str(reply_to),
+            }).encode("utf-8")).read()
+            logging.info('send photo:')
+            logging.info(resp)
+        except Exception as e:
+            resp = "Error"
+            log(e)
 
     # Quick message reply function.
     def reply(msg, replying=str(message_id)):
@@ -241,6 +264,9 @@ def webhook_handler():
     elif uniformed_text.startswith(("cultbot", "cultrobot", "cult bot", "cult robot")):
         if len(text.split('ot', 1)) == 2:
             askgoogle(text.split('ot', 1)[1])
+
+    elif text == '!avi':
+        sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
 
     # Private chat answers.
     else:
