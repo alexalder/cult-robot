@@ -263,7 +263,8 @@ def webhook_handler():
 
     elif uniformed_text.startswith(("cultbot", "cultrobot", "cult bot", "cult robot")):
         if len(text.split('ot', 1)) == 2:
-            askgoogle(text.split('ot', 1)[1])
+            if text.split('ot', 1)[1]:
+                askgoogle(text.split('ot', 1)[1])
 
     elif text == '!avi':
         sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
