@@ -197,6 +197,48 @@ def webhook_handler():
         except Exception as e:
             resp = "Error"
             log(e)
+    
+    
+    def roll(rolls):
+        output = ""
+
+        try:
+            for i in rolls:
+                if i == '+':
+                    index = rolls.index(i)
+                    rolls[index - 1:index + 2] = [''.join(rolls[index - 1:index + 2])]
+
+            for element in rolls:
+              results = []
+                dices = element.split('+')
+                for dice in dices:
+
+                    values = dice.split("d")
+
+                    times = int(values[0])
+                    faces = int(values[1])
+
+                    if times < 0:
+                        raise Exception
+                    elif times > 50 or faces <= 1:
+                        return "Bel meme"
+
+                    while times != 0:
+                        roll = random.randint(1, int(values[1]))
+                        results += [roll]
+                        times -= 1
+
+                sumout = str(sum(results))
+
+                resultsout = str(results[0])
+                for result in results[0:]:
+                    resultsout += " + " + str(result)
+                output += "Hai rollato " + resultsout + " = " + sumout + ".\n"
+
+            return(output)
+        except Exception:
+            return("sintassi errata!")
+    
 
     # Quick message reply function.
     def reply(msg, replying=str(message_id)):
@@ -237,6 +279,13 @@ def webhook_handler():
                 if len(text.split()) >= 2:
                     tapusername = text.split()[1]
                     tapmusic(tapusername)
+        
+        # Roll. Throws a dice, or more.
+        elif text.startswith('/roll'):
+                if len(text.split() >= 2):
+                    reply(roll(text.split()[1:]))
+                else:
+                    reply("Utilizzo: /roll 4d3, /roll 3d5 + 2d3")
 
         # Changelog.
         elif text.startswith('/changelog'):
