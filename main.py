@@ -282,7 +282,7 @@ def webhook_handler():
         
         # Roll. Throws a dice, or more.
         elif text.startswith('/roll'):
-                if len(text.split() >= 2):
+                if len(text.split()) >= 2:
                     reply(roll(text.split()[1:]))
                 else:
                     reply("Utilizzo: /roll 4d3, /roll 3d5 + 2d3")
