@@ -203,10 +203,12 @@ def webhook_handler():
         output = ""
 
         try:
-            for i in rolls:
-                if i == '+':
-                    index = rolls.index(i)
-                    rolls[index - 1:index + 2] = [''.join(rolls[index - 1:index + 2])]
+            i = 0
+            while i < len(rolls):
+                if rolls[i] == '+':
+                    rolls[i - 1:i + 2] = [''.join(rolls[i - 1:i + 2])]
+                else:
+                    i += 1
 
             for element in rolls:
                 results = []
@@ -215,7 +217,10 @@ def webhook_handler():
 
                     values = dice.split("d")
 
-                    times = int(values[0])
+                    if values[0] == '':
+                        times = 1
+                    else:
+                        times = int(values[0])
                     faces = int(values[1])
 
                     if times < 0:
@@ -231,9 +236,14 @@ def webhook_handler():
                 sumout = str(sum(results))
 
                 resultsout = str(results[0])
-                for result in results[0:]:
-                    resultsout += " + " + str(result)
-                output += "Hai rollato " + resultsout + " = " + sumout + ".\n"
+
+                if len(results) > 1:
+                    resultsout = str(results[0])
+                    for result in results[1:]:
+                        resultsout += " + " + str(result)
+                    output += "Hai rollato " + resultsout + " = " + sumout + ".\n"
+                else:
+                    output += "Hai rollato " + resultsout + ".\n"
 
             return(output)
         except Exception:
