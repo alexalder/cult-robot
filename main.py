@@ -209,7 +209,7 @@ def webhook_handler():
                     rolls[index - 1:index + 2] = [''.join(rolls[index - 1:index + 2])]
 
             for element in rolls:
-              results = []
+                results = []
                 dices = element.split('+')
                 for dice in dices:
 
