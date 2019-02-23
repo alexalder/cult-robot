@@ -1,10 +1,4 @@
 passwords.py
 client_secret_935785917266-65e7lt6bfkjv1reghobgn585prudk3tc.apps.googleusercontent.com.json
 .DS_Store
-.idea/workspace.xml
-.idea/codeStyles/codeStyleConfig.xml
-.idea/cult-robot.iml
-.idea/inspectionProfiles/Project_Default.xml
-.idea/misc.xml
-.idea/modules.xml
-.idea/vcs.xml
+.idea/
