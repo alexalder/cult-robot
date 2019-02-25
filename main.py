@@ -85,8 +85,9 @@ def webhook_handler():
     message_id = message.get('message_id')
     date = message.get('date')
     text = message.get('text')
+    is_forward = message.get('forward_from')
     
-    if not text:
+    if (not text) or is_forward:
         logging.info('no text')
         return json.dumps(body)
     
