@@ -150,9 +150,9 @@ def webhook_handler():
     def askgoogle(query):
         display_text = assistant.assist(text_query=query)
         if display_text is None:
-            reply("Non so rispondere, bopo")
+            return reply("Non so rispondere, bopo")
         else:
-            reply(display_text)
+            return reply(display_text)
 
     def tapmusic(tapusername):
         try:
@@ -162,17 +162,19 @@ def webhook_handler():
             url = BASE_URL + "sendPhoto"
             files = {'photo': open('/tmp/image_name.jpg', 'rb')}
             data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
-            requests.post(url, files=files, data=data)
+            return requests.post(url, files=files, data=data)
         except Exception:
             reply("Errore nella gestione del comando")
+            return render_template('Error getting tapmusic'), 400
 
     def pinreply():
         try:
             pin = message.get('reply_to_message').get('message_id')
-            urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
+            res = urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
                 'chat_id': str(chat_id),
                 'message_id': str(pin),
                 'disable_notification': 'true', }).encode("utf-8")).read()
+            return res
         except Exception:
             reply("Rispondi a un messaggio, silly petta!")
 
@@ -196,8 +198,10 @@ def webhook_handler():
             logging.info('send photo:')
             logging.info(resp)
         except Exception as e:
-            resp = "Error"
+            resp = render_template('Error sending photo'), 400
             log(e)
+        finally:
+            return resp
     
     
     def roll(rolls):
@@ -265,6 +269,8 @@ def webhook_handler():
             logging.info(resp)
         except Exception:
             logging.exception("Exception in reply:")
+        finally:
+            return resp
 
     if text.startswith('/'):
 
@@ -272,67 +278,67 @@ def webhook_handler():
         # Check if bot is alive.
         if text.startswith('/ping'):
             answers = ['Welo', 'Bopo']
-            reply(random.choice(answers))
+            return reply(random.choice(answers))
     
         # Baraldigen. Generates Baraldi-like sentences about Donne.
         elif text.startswith('/baraldi'):
             bar = json.load(open("textdatabase.json"), encoding='utf-8')
-            reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) +
+            return reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) +
                   " " + random.choice(bar["conjunction"]) + " " + random.choice(bar["metaphor3"]))
         
         # Eightball. Picks a random answer from the possible 20.
         elif text.startswith('/8ball'):
             database = json.load(open("textdatabase.json"), encoding='utf-8')
-            reply(random.choice(database["8ball"]))
+            return reply(random.choice(database["8ball"]))
     
         # TapMusic. Sends a collage based on the user's weekly Last.fm charts.
         elif text.startswith('/tapmusic'):
                 if len(text.split()) >= 2:
                     tapusername = text.split()[1]
-                    tapmusic(tapusername)
-        
+                    return tapmusic(tapusername)
+
         # Roll. Throws a dice, or more.
         elif text.startswith('/roll'):
                 if len(text.split()) >= 2:
-                    reply(roll(text.split()[1:]))
+                    return reply(roll(text.split()[1:]))
                 else:
-                    reply("Utilizzo: /roll 4d3, /roll 3d5 + 2d3")
+                    return reply("Utilizzo: /roll 4d3, /roll 3d5 + 2d3")
 
         # Changelog.
         elif text.startswith('/changelog'):
-            reply(changelog.logString)
+            return reply(changelog.logString)
 
         # REPLY COMMANDS
         # Pin the message Petta replied to.
         elif text == '/pin' and int(fr_id) == 178593329:
-            pinreply()
+            return pinreply()
 
         # Spongebob mocks the message the user replied to.
         elif text in ['/mock', '/spongemock', '/mockingbob']:
-            reply(mock())
+            return reply(mock())
 
     # OTHER COMMANDS
     # Classic stream editor.
     elif filtersed():
-        reply(sed(), reply_message.get('message_id'))
+        return reply(sed(), reply_message.get('message_id'))
 
     # Random answer between yes or no.
     elif filteryn():
         answers = ['y', 'n']
-        reply(random.choice(answers))
+        return reply(random.choice(answers))
 
     elif uniformed_text.startswith(("cultbot", "cultrobot", "cult bot", "cult robot")):
         if len(text.split('ot', 1)) == 2:
             if text.split('ot', 1)[1]:
-                askgoogle(text.split('ot', 1)[1])
+                return askgoogle(text.split('ot', 1)[1])
 
     elif text == '!avi':
-        sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
+        return sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
 
     # Private chat answers.
     else:
         if chat_id == fr_id:
-            reply('Ho ricevuto il messaggio ma non so come rispondere')
+            return reply('Ho ricevuto il messaggio ma non so come rispondere')
 
     return json.dumps(body)
 
@@ -343,7 +349,7 @@ def bopo_handler():
     try:
         # TO DO delay = random.randint(10, 7200)
         # deferred.defer(send, "Bopo", -1001073393308, _countdown=delay)
-        send("BOPO", -1001073393308)
+        return send("BOPO", -1001073393308)
     except Exception as e:
         log(e)
 
@@ -361,7 +367,7 @@ def peak_handler():
             alert = send('MUSIC MONDAY', -1001073393308)
             # Pins the alert only if there's no current pinned message or it is older than a working day.
             if thischat.get('result').get('pinned_message') is None or (time.mktime(datetime.datetime.now().timetuple()) - thischat.get('result').get('pinned_message').get('date')) > 54000:
-                urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
+                return urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
                                                                               'chat_id': str(-1001073393308),
                                                                               'message_id': str(json.loads(alert).get('result').get('message_id')),
                                                                               'disable_notification': 'true', }).encode("utf-8")).read()
