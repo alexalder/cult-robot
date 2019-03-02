@@ -12,7 +12,7 @@ import sys
 import requests
 
 # Standard app engine imports
-from flask import Flask, render_template, request
+from flask import Flask, request, make_response
 
 # Locals
 import passwords
@@ -118,7 +118,8 @@ def webhook_handler():
             return False
 
     def filteryn():
-        pattern = regex.compile("(^|.*\s+)y\/n\s*$", regex.IGNORECASE)  # y/n can be the only or last pattern in a message
+        # y/n can be the only or last pattern in a message
+        pattern = regex.compile("(^|.*\s+)y\/n\s*$", regex.IGNORECASE)
         return pattern.match(text)
 
     def mock(diversity_bias=0.5, random_seed=None):
@@ -162,10 +163,11 @@ def webhook_handler():
             url = BASE_URL + "sendPhoto"
             files = {'photo': open('/tmp/image_name.jpg', 'rb')}
             data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
-            return requests.post(url, files=files, data=data)
+            requests.post(url, files=files, data=data)
+            return make_response('Successfully got tapmusic')
         except Exception:
             reply("Errore nella gestione del comando")
-            return render_template('Error getting tapmusic'), 400
+            return make_response('Error getting tapmusic', 400)
 
     def pinreply():
         try:
@@ -183,7 +185,6 @@ def webhook_handler():
             'user_id': str(user_id),
         }).encode("utf-8")).read()
         answer = json.loads(query).get("result")
-        #photo_number = answer.get('total_count')
         last_photo = answer.get('photos')[0][0].get('file_id')
         return last_photo
 
@@ -198,12 +199,11 @@ def webhook_handler():
             logging.info('send photo:')
             logging.info(resp)
         except Exception as e:
-            resp = render_template('Error sending photo'), 400
+            resp = make_response('Error sending photo', 400)
             log(e)
         finally:
             return resp
-    
-    
+
     def roll(rolls):
         output = ""
 
@@ -250,10 +250,9 @@ def webhook_handler():
                 else:
                     output += "Hai rollato " + resultsout + ".\n"
 
-            return(output)
+            return output
         except Exception:
-            return("sintassi errata!")
-    
+            return "sintassi errata!"
 
     # Quick message reply function.
     def reply(msg, replying=str(message_id)):
@@ -268,7 +267,7 @@ def webhook_handler():
             logging.info('Send response:')
             logging.info(resp)
         except Exception:
-            logging.exception("Exception in reply:")
+            resp = ('Exception in reply', 400)
         finally:
             return resp
 
@@ -284,7 +283,7 @@ def webhook_handler():
         elif text.startswith('/baraldi'):
             bar = json.load(open("textdatabase.json"), encoding='utf-8')
             return reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) +
-                  " " + random.choice(bar["conjunction"]) + " " + random.choice(bar["metaphor3"]))
+                         " " + random.choice(bar["conjunction"]) + " " + random.choice(bar["metaphor3"]))
         
         # Eightball. Picks a random answer from the possible 20.
         elif text.startswith('/8ball'):
