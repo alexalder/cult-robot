@@ -26,6 +26,8 @@ BASE_URL = 'https://api.telegram.org/bot' + passwords.telegram_token + '/'
 
 assistant = CultTextAssistant()
 
+amazon_tag = "cultbot-21"
+
 # Logging
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
@@ -203,6 +205,22 @@ def webhook_handler():
             log(e)
         finally:
             return resp
+    
+    def filterref():
+        patterns = '/dp|/gp/product|amzn'
+        return regex.search(patterns, text)
+    
+    def reflink(link):
+        product_code = ""
+        if "/dp" in link:
+            product_code = regex.split('[/?]', link.split("/dp/")[1])[0]
+        elif "/gp/product" in link:
+            product_code = regex.split('[/?]', link.split("/gp/product/")[1])[0]
+        elif "amzn" in link:
+            r = requests.head(link, allow_redirects=True)
+            return reflink(r.url)
+        if product_code:
+            return reply("http://www.amazon.it/dp/" + product_code + "/?tag=" + amazon_tag)
 
     def roll(rolls):
         output = ""
@@ -337,7 +355,10 @@ def webhook_handler():
     # Private chat answers.
     else:
         if chat_id == fr_id:
-            return reply('Ho ricevuto il messaggio ma non so come rispondere')
+            if filterref():
+                return reflink(text)
+            else:
+                return reply('Ho ricevuto il messaggio ma non so come rispondere')
 
     return json.dumps(body)
 
