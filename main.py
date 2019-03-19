@@ -214,9 +214,9 @@ def webhook_handler():
     def reflink(link):
         product_code = ""
         if "/dp" in link:
-            product_code = re.split('[/?]', link.split("/dp/")[1])[0]
+            product_code = re.split('[^0-9a-zA-Z]', link.split("/dp/")[1])[0]
         elif "/gp/product" in link:
-            product_code = re.split('[/?]', link.split("/gp/product/")[1])[0]
+            product_code = re.split('[^0-9a-zA-Z]', link.split("/gp/product/")[1])[0]
         elif "amzn" in link:
             r = requests.head(link, allow_redirects=True)
             return reflink(r.url)
