@@ -1,3 +1,4 @@
+
 # -*- coding: utf-8 -*-
 
 # Base imports
@@ -5,7 +6,7 @@ import json
 import logging
 import random
 import urllib.request, urllib.parse, urllib.error
-import re as regex
+import re
 import datetime
 import time
 import sys
@@ -112,7 +113,7 @@ def webhook_handler():
     # Since only the "i" flag is available for now, we'll match zero or one characters.
     def filtersed():
         try:
-            pattern = regex.compile("^s([^a-zÀ-ÿ\s]).*\\1.*\\1.?$", regex.IGNORECASE)
+            pattern = re.compile("^s([^a-zÀ-ÿ\s]).*\\1.*\\1.?$", re.IGNORECASE)
             if pattern.match(text) and sed() is not None:
                 return True
             return False
@@ -121,7 +122,7 @@ def webhook_handler():
 
     def filteryn():
         # y/n can be the only or last pattern in a message
-        pattern = regex.compile("(^|.*\s+)y\/n\s*$", regex.IGNORECASE)
+        pattern = re.compile("(^|.*\s+)y\/n\s*$", re.IGNORECASE)
         return pattern.match(text)
 
     def mock(diversity_bias=0.5, random_seed=None):
@@ -142,12 +143,12 @@ def webhook_handler():
             return out
 
     def sed():
-        m = regex.match(r"^s(?P<delimiter>.)", text)
-        sub = regex.split(r"(?<!\\)" + regex.escape(m.group("delimiter")), text)
+        m = re.match(r"^s(?P<delimiter>.)", text)
+        sub = re.split(r"(?<!\\)" + re.escape(m.group("delimiter")), text)
         if "i" in sub[3]:
-            result = regex.sub(sub[1], sub[2], reply_text, flags=regex.IGNORECASE)    # if "i" is after the last delimiter, sub by ignoring case
+            result = re.sub(sub[1], sub[2], reply_text, flags=re.IGNORECASE)    # if "i" is after the last delimiter, sub by ignoring case
         else:
-            result = regex.sub(sub[1], sub[2], reply_text)                            # else just sub normally
+            result = re.sub(sub[1], sub[2], reply_text)                            # else just sub normally
         return result
 
     def askgoogle(query):
@@ -208,14 +209,14 @@ def webhook_handler():
     
     def filterref():
         patterns = '/dp|/gp/product|amzn'
-        return regex.search(patterns, text)
+        return re.search(patterns, text)
     
     def reflink(link):
         product_code = ""
         if "/dp" in link:
-            product_code = regex.split('[/?]', link.split("/dp/")[1])[0]
+            product_code = re.split('[/?]', link.split("/dp/")[1])[0]
         elif "/gp/product" in link:
-            product_code = regex.split('[/?]', link.split("/gp/product/")[1])[0]
+            product_code = re.split('[/?]', link.split("/gp/product/")[1])[0]
         elif "amzn" in link:
             r = requests.head(link, allow_redirects=True)
             return reflink(r.url)
