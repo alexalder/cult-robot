@@ -188,19 +188,26 @@ def webhook_handler():
             'user_id': str(user_id),
         }).encode("utf-8")).read()
         answer = json.loads(query).get("result")
-        last_photo = answer.get('photos')[0][0].get('file_id')
+        photo_array = answer.get('photos')
+        last_photo = None
+        if photo_array:
+            last_photo = photo_array[0][0].get('file_id')
         return last_photo
 
     def sendphoto(file_id, reply_to=None):
         try:
-            resp = urllib.request.urlopen(BASE_URL + 'sendPhoto', urllib.parse.urlencode({
-                'chat_id': str(chat_id),
-                'photo': file_id,
-                'parse_mode': 'Markdown',
-                'reply_to_message_id': str(reply_to),
-            }).encode("utf-8")).read()
-            logging.info('send photo:')
-            logging.info(resp)
+            if not file_id:
+                resp = make_response('Photo is null')
+                logging.info('Photo is null')
+            else:
+                resp = urllib.request.urlopen(BASE_URL + 'sendPhoto', urllib.parse.urlencode({
+                    'chat_id': str(chat_id),
+                    'photo': file_id,
+                    'parse_mode': 'Markdown',
+                    'reply_to_message_id': str(reply_to),
+                }).encode("utf-8")).read()
+                logging.info('send photo:')
+                logging.info(resp)
         except Exception as e:
             resp = make_response('Error sending photo', 400)
             log(e)
