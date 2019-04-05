@@ -141,6 +141,8 @@ def webhook_handler():
                 out += c
         
             return out
+        else:
+            return "No, tu"
 
     def sed():
         m = re.match(r"^s(?P<delimiter>.)", text)
