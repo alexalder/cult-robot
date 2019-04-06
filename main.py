@@ -106,7 +106,7 @@ def webhook_handler():
         reply_message = message.get('reply_to_message')
         if message.get('reply_to_message').get('text') is not None:
             reply_text = message.get('reply_to_message').get('text')
-    
+
     # Command handlers
 
     # Check if the message only contains the s/pattern/repl/ syntax, plus match flags at the end.
@@ -285,15 +285,21 @@ def webhook_handler():
     # Quick message reply function.
     def reply(msg, replying=str(message_id)):
         try:
-            resp = urllib.request.urlopen(BASE_URL + 'sendMessage', urllib.parse.urlencode({
-                'chat_id': str(chat_id),
-                'text': msg.encode('utf-8'),
-                'disable_web_page_preview': 'true',
-                'reply_to_message_id': replying,
-            }).encode("utf-8")).read()
+            logging.info('Send response text and request:')
 
-            logging.info('Send response:')
-            logging.info(resp)
+            if msg and not msg.isspace():
+                logging.info(repr(msg))
+                resp = urllib.request.urlopen(BASE_URL + 'sendMessage', urllib.parse.urlencode({
+                    'chat_id': str(chat_id),
+                    'text': msg.encode('utf-8'),
+                    'disable_web_page_preview': 'true',
+                    'reply_to_message_id': replying,
+                }).encode("utf-8")).read()
+
+                logging.info(resp)
+            else:
+                resp = make_response('Empty string')
+
         except Exception:
             resp = ('Exception in reply', 400)
         finally:
