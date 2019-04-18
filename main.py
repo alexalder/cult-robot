@@ -362,7 +362,8 @@ def webhook_handler():
 
     elif uniformed_text.startswith(("cultbot", "cultrobot", "cult bot", "cult robot")):
         if len(text.split('ot', 1)) == 2:
-            if text.split('ot', 1)[1]:
+            query = text.split('ot', 1)[1]
+            if 0 < len(query) < 100:
                 return askgoogle(text.split('ot', 1)[1])
 
     elif text == '!avi':
