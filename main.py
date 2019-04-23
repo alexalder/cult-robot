@@ -367,7 +367,8 @@ def webhook_handler():
                 return askgoogle(text.split('ot', 1)[1])
 
     elif text == '!avi':
-        return sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
+        if reply_text:
+            return sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
 
     # Private chat answers.
     else:
