@@ -298,7 +298,7 @@ def webhook_handler():
         try:
             logging.info('Send response text and request:')
 
-            if msg and not msg.isspace() and len(res) < 4096:
+            if msg and not msg.isspace() and len(msg) < 4096:
                 logging.info(repr(msg))
                 resp = urllib.request.urlopen(BASE_URL + 'sendMessage', urllib.parse.urlencode({
                     'chat_id': str(chat_id),
