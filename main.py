@@ -185,6 +185,17 @@ def webhook_handler():
         except Exception:
             reply("Rispondi a un messaggio, silly petta!")
 
+    def cultname(newname):
+        try:
+            fullname = 'CULT - ' + str(newname)
+            res = urllib.request.urlopen(BASE_URL + 'setChatTitle', urllib.parse.urlencode({
+                'chat_id': str(chat_id),
+                'title': fullname, }).encode("utf-8")).read()
+            return res
+        except Exception as e:
+            logging.info(e)
+            return reply("Errore nel cambio del nome")
+
     def getavatar(user_id):
         query = urllib.request.urlopen(BASE_URL + 'getUserProfilePhotos', urllib.parse.urlencode({
             'user_id': str(user_id),
@@ -345,6 +356,10 @@ def webhook_handler():
         # Pin the message Petta replied to.
         elif text == '/pin' and int(fr_id) == 178593329:
             return pinreply()
+
+        elif text == '/cultname' and int(chat_id) == -1001073393308:
+            if reply_text and len(reply_text) < 20:
+                return cultname(reply_text)
 
         # Spongebob mocks the message the user replied to.
         elif text in ['/mock', '/spongemock', '/mockingbob']:
