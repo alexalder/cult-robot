@@ -358,7 +358,7 @@ def webhook_handler():
             return pinreply()
 
         elif text == '/cultname' and int(chat_id) == -1001073393308:
-            if reply_text and len(reply_text) < 20:
+            if reply_text and len(reply_text) <= 25:
                 return cultname(reply_text)
 
         # Spongebob mocks the message the user replied to.
