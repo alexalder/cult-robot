@@ -160,6 +160,13 @@ def webhook_handler():
         else:
             return reply(display_text)
 
+    def getfile(file_id):
+        query = urllib.request.urlopen(BASE_URL + 'getFile', urllib.parse.urlencode({
+                                                                                                 'file_id': str(file_id),
+                                                                                                 }).encode("utf-8")).read()
+        answer = json.loads(query).get("result")
+        return answer.get('file_path')
+
     def tapmusic(tapusername):
         try:
             img_data = requests.get("http://tapmusic.net/collage.php?user=" + tapusername + "&type=7day&size=5x5&caption=true&playcount=true").content
@@ -170,9 +177,27 @@ def webhook_handler():
             data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
             requests.post(url, files=files, data=data)
             return make_response('Successfully got tapmusic')
-        except Exception:
-            reply("Errore nella gestione del comando")
-            return make_response('Error getting tapmusic', 400)
+        except urllib.error.HTTPError as e:
+            return reply("Errore nella gestione del comando: " + e.read().decode())
+        except Exception as e:
+            return reply("Errore nella gestione del comando: " + e)
+
+    def cultphoto(file_id):
+        try:
+            file_path = getfile(file_id)
+            full_path = 'https://api.telegram.org/file/bot' + passwords.telegram_token + '/' + file_path
+            img_data = requests.get(full_path).content
+            with open('/tmp/image_name.jpg', 'wb+') as handler:
+                handler.write(img_data)
+            url = BASE_URL + "setChatPhoto"
+            files = {'photo': open('/tmp/image_name.jpg', 'rb')}
+            data = {'chat_id': chat_id}
+            requests.post(url, files=files, data=data)
+            return make_response('Successfully updated cult photo')
+        except urllib.error.HTTPError as e:
+            return reply("Errore nella gestione del comando: " + e.read().decode())
+        except Exception as e:
+            return reply("Errore nella gestione del comando: " + e)
 
     def pinreply():
         try:
@@ -361,6 +386,12 @@ def webhook_handler():
             if reply_text and len(reply_text) <= 25:
                 return cultname(reply_text)
 
+        elif text == '/cultphoto' and int(chat_id) == -1001073393308:
+            if reply_message is not None:
+                if reply_message.get('photo') is not None:
+                    photo_id = reply_message.get('photo')[-1].get('file_id')
+                    return cultphoto(photo_id)
+    
         # Spongebob mocks the message the user replied to.
         elif text in ['/mock', '/spongemock', '/mockingbob']:
             return reply(mock())
