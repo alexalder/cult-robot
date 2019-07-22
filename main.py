@@ -83,18 +83,21 @@ def webhook_handler():
     update_id = body['update_id']
     try:
         message = body['message']
+        if not message:
+            message = body['edited_message']
+        text = message.get('text')
+        is_forward = message.get('forward_from')
     except:
-        message = body['edited_message']
-    message_id = message.get('message_id')
-    date = message.get('date')
-    text = message.get('text')
-    is_forward = message.get('forward_from')
-    
-    if (not text) or is_forward:
+        logging.info('unhandled message')
+        return json.dumps(body)
+
+    if not text or is_forward:
         logging.info('no text')
         return json.dumps(body)
     
     # Useful variables
+    message_id = message.get('message_id')
+    date = message.get('date')
     uniformed_text = text.lower()
     fr = message.get('from')
     fr_id = fr.get('id')
