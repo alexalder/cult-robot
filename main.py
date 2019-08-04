@@ -419,13 +419,15 @@ def webhook_handler():
         if reply_text:
             return sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
 
-    # Private chat answers.
+    # Fallback
     else:
-        if chat_id == fr_id:
-            if filterref():
+        if chat_id == fr_id and filterref():
                 return reflink(text)
-            else:
-                return reply('Ho ricevuto il messaggio ma non so come rispondere')
+        else:
+            if reply_message is not None:
+                if reply_message.get('from').get('id') == 587688480:
+                    if 0 < len(text) < 100:
+                        return askgoogle(text)
 
     return json.dumps(body)
 
