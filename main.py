@@ -159,7 +159,7 @@ def webhook_handler():
     def askgoogle(query):
         display_text = assistant.assist(text_query=query)
         if display_text is None:
-            return reply("Non so rispondere, bopo")
+            return make_response('Empty string')
         else:
             return reply(display_text)
 
