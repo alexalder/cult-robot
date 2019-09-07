@@ -167,9 +167,15 @@ def webhook_handler():
             result = re.sub(sub[1], sub[2], reply_text)                            # else just sub normally
         return result
 
+    def eight_ball():
+        database = json.load(open("textdatabase.json"), encoding='utf-8')
+        return random.choice(database["8ball"])
+
     def askgoogle(query):
         display_text = assistant.assist(text_query=query)
         if display_text is None:
+            if query[-1] == "?":
+                return reply(eight_ball())
             return make_response('Empty string')
         else:
             return reply(display_text)
@@ -199,7 +205,7 @@ def webhook_handler():
     def cultphoto(file_id):
         try:
             file_path = getfile(file_id)
-            full_path = 'https://api.telegram.org/file/bot' + passwords.telegram_token + '/' + file_path
+            full_path = 'https://api.telegram.org/file/bot' + telegram_token + '/' + file_path
             img_data = requests.get(full_path).content
             with open('/tmp/image_name.jpg', 'wb+') as handler:
                 handler.write(img_data)
@@ -371,8 +377,7 @@ def webhook_handler():
         
         # Eightball. Picks a random answer from the possible 20.
         elif text.startswith('/8ball'):
-            database = json.load(open("textdatabase.json"), encoding='utf-8')
-            return reply(random.choice(database["8ball"]))
+            return reply(eight_ball())
     
         # TapMusic. Sends a collage based on the user's weekly Last.fm charts.
         elif text.startswith('/tapmusic'):
