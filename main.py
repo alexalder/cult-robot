@@ -12,20 +12,31 @@ import time
 import sys
 import requests
 
+from google.cloud import datastore
+import google.cloud.exceptions
+
+
 # Standard app engine imports
 from flask import Flask, request, make_response
 
 # Locals
-import passwords
+
 import changelog
 from cultassistant import CultTextAssistant
 
 # Configuration
 app = Flask(__name__)
 
-BASE_URL = 'https://api.telegram.org/bot' + passwords.telegram_token + '/'
+#Datastore
+datastore_client = datastore.Client()
 
-assistant = CultTextAssistant()
+telegram_token = datastore_client.get(datastore_client.key("Secret", "telegram_token"))["value"]
+assistant_secret = json.loads(datastore_client.get(datastore_client.key("Secret", "assistant_secret"))["value"])
+
+
+BASE_URL = 'https://api.telegram.org/bot' + telegram_token + '/'
+
+assistant = CultTextAssistant(assistant_secret)
 
 amazon_tag = "cultbot-21"
 

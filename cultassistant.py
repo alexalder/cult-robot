@@ -20,12 +20,10 @@ class CultTextAssistant(object):
       deadline_sec: gRPC deadline in seconds for Google Assistant API call.
     """
 
-    def __init__(self, language_code="it-IT", device_model_id="cult-robot-telegram", device_id="cult-robot-telegram-app", deadline_sec=185):
-        with open('client_secret_935785917266-65e7lt6bfkjv1reghobgn585prudk3tc.apps.googleusercontent.com.json', 'r') as f:
-            secret = json.load(f).get('installed')
-            credentials = google.oauth2.credentials.Credentials(token=None, token_uri=secret.get('token_uri'), client_id=secret.get('client_id'), client_secret=secret.get('client_secret'), refresh_token=secret.get('refresh_token'))
-            http_request = google.auth.transport.requests.Request()
-            credentials.refresh(http_request)
+    def __init__(self, secret, language_code="it-IT", device_model_id="cult-robot-telegram", device_id="cult-robot-telegram-app", deadline_sec=185):
+        credentials = google.oauth2.credentials.Credentials(token=None, token_uri=secret.get('token_uri'), client_id=secret.get('client_id'), client_secret=secret.get('client_secret'), refresh_token=secret.get('refresh_token'))
+        http_request = google.auth.transport.requests.Request()
+        credentials.refresh(http_request)
         grpc_channel = google.auth.transport.grpc.secure_authorized_channel(
             credentials, http_request, 'embeddedassistant.googleapis.com')
         self.device_model_id = device_model_id
