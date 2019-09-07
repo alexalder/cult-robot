@@ -31,7 +31,7 @@ app = Flask(__name__)
 datastore_client = datastore.Client()
 
 telegram_token = datastore_client.get(datastore_client.key("Secret", "telegram_token"))["value"]
-assistant_secret = json.loads(datastore_client.get(datastore_client.key("Secret", "assistant_secret"))["value"])
+assistant_secret = json.loads(datastore_client.get(datastore_client.key("Secret", "assistant_secret"))["value"])["installed"]
 
 
 BASE_URL = 'https://api.telegram.org/bot' + telegram_token + '/'
