@@ -180,6 +180,15 @@ def webhook_handler():
         else:
             return reply(display_text)
 
+    def minecraftcheck():
+        r = requests.get("https://api.mcsrvstat.us/2/93.42.109.78")
+        formatted = json.loads(r.text)
+        server_status = "Online" if formatted["online"] else "Offline"
+        onlineppl = formatted["players"]["online"]
+        version = formatted["version"]
+        text = "cult.duckdns.org:25565\nServer: " + server_status + "\nGiocatori: " + str(onlineppl) + "\nVersione: " + version
+        return text
+
     def getfile(file_id):
         query = urllib.request.urlopen(BASE_URL + 'getFile', urllib.parse.urlencode({
                                                                                                  'file_id': str(file_id),
@@ -368,6 +377,9 @@ def webhook_handler():
         if text.startswith('/ping'):
             answers = ['Welo', 'Bopo']
             return reply(random.choice(answers))
+
+        elif text.startswith('/minecraft'):
+            return reply(minecraftcheck())
     
         # Baraldigen. Generates Baraldi-like sentences about Donne.
         elif text.startswith('/baraldi'):
@@ -445,7 +457,7 @@ def webhook_handler():
                     if 0 < len(text) < 100:
                         return askgoogle(text)
 
-    return json.dumps(body)
+    return make_response('Nothing to handle')
 
 
 # Called at 5:00 every day.
@@ -476,5 +488,6 @@ def peak_handler():
                                                                               'chat_id': str(-1001073393308),
                                                                               'message_id': str(json.loads(alert).get('result').get('message_id')),
                                                                               'disable_notification': 'true', }).encode("utf-8")).read()
+        return make_response('Peak hour handled')
     except Exception as e:
         log(e)
