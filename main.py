@@ -36,8 +36,6 @@ assistant_secret = json.loads(datastore_client.get(datastore_client.key("Secret"
 
 BASE_URL = 'https://api.telegram.org/bot' + telegram_token + '/'
 
-assistant = CultTextAssistant(assistant_secret)
-
 amazon_tag = "cultbot-21"
 
 # Logging
@@ -47,6 +45,12 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 def log(e):
     logging.error(e)
     send("ERROR!:" + e, -1001229811735)
+
+
+# Initializing cult assistant
+
+assistant = CultTextAssistant(assistant_secret)
+
 
 
 # Telegram webhook handling
@@ -172,6 +176,8 @@ def webhook_handler():
         return random.choice(database["8ball"])
 
     def askgoogle(query):
+        if not assistant.ready:
+            return make_response("Assistant unavailable")
         display_text = assistant.assist(text_query=query)
         if display_text is None:
             if query[-1] == "?":
