@@ -177,7 +177,7 @@ def webhook_handler():
 
     def askgoogle(query):
         if not assistant.ready:
-            return make_response("Assistant unavailable")
+            return reply(eight_ball())
         display_text = assistant.assist(text_query=query)
         if display_text is None:
             if query[-1] == "?":
