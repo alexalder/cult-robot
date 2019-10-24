@@ -454,8 +454,9 @@ def webhook_handler():
         else:
             if reply_message is not None:
                 if reply_message.get('from').get('id') == 587688480:
-                    if 0 < len(text) < 100:
-                        return askgoogle(text)
+                    if text.endswith('?'):
+                        if 0 < len(text) < 100:
+                            return askgoogle(text)
 
     return make_response('Nothing to handle')
 
@@ -469,6 +470,11 @@ def bopo_handler():
         return send("BOPO", -1001073393308)
     except Exception as e:
         log(e)
+
+
+@app.route('/keepalive')
+def keepalive_handler():
+    return make_response('Keep alive')
 
 
 # Called at 18:00 every day.
