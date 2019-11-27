@@ -31,13 +31,7 @@ db = firestore.Client()
 
 secrets = db.collection('data').document('secrets').get().to_dict()
 
-#assistant_secret = json.loads(datastore_client.get(datastore_client.key("Secret", "assistant_secret"))["value"])["installed"]
-
-
-#BASE_URL = 'https://api.telegram.org/bot' + telegram_token + '/'
-
 bot = Bot('https://api.telegram.org/bot' + secrets['telegram_token'] + '/')
-#amazon_tag = "cultbot-21"
 
 # Logging
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -45,7 +39,6 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 def log(e):
     logging.error(e)
-    #send("ERROR!:" + e, -1001229811735)
     bot.send(secrets['report_id'], msg="ERROR!:" + e)
 
 
@@ -191,17 +184,11 @@ def webhook_handler():
                 handler.write(img_data)
 
             bot.send_file(chat_id, photo='/tmp/image_name.jpg', reply=str(message_id))
-            #url = bot.base_url + "sendPhoto"
-            #files = {'photo': open('/tmp/image_name.jpg', 'rb')}
-            #data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
-            #requests.post(url, files=files, data=data)
 
             return make_response('Successfully got Tapmusic')
         except urllib.error.HTTPError as e:
-            #return reply("Errore nella gestione del comando: " + e.read().decode())
             return bot.send(chat_id, msg="Errore nella gestione del comando: " + e.read().decode(), reply=message_id)
         except Exception as e:
-            #return reply("Errore nella gestione del comando: " + e)
             return bot.send(chat_id, msg="Errore nella gestione del comando: " + e, reply=message_id)
 
     def cultphoto(file_id):
@@ -219,10 +206,8 @@ def webhook_handler():
 
             return make_response('Successfully updated cult photo')
         except urllib.error.HTTPError as e:
-            #return reply("Errore nella gestione del comando: " + e.read().decode())
             return bot.send(chat_id, msg="Errore nella gestione del comando: " + e.read().decode(), reply=message_id)
         except Exception as e:
-            #return reply("Errore nella gestione del comando: " + e)
             return bot.send(chat_id, msg="Errore nella gestione del comando: " + e, reply=message_id)
 
     def cultname(newname):
@@ -234,7 +219,6 @@ def webhook_handler():
             return res
         except Exception as e:
             logging.info(e)
-            #return reply("Errore nel cambio del nome")
             return bot.send(chat_id, msg="Errore nel cambio del nome", reply=message_id)
 
     def getavatar(user_id):
@@ -262,7 +246,6 @@ def webhook_handler():
             r = requests.head(link, allow_redirects=True)
             return reflink(r.url)
         if product_code:
-            #return reply("http://www.amazon.it/dp/" + product_code + "/?tag=" + amazon_tag)
             return bot.send(chat_id, msg="http://www.amazon.it/dp/" + product_code + "/?tag=" + secrets['amazon_tag'], reply=message_id)
 
     def roll(rolls):
@@ -321,11 +304,9 @@ def webhook_handler():
         # Check if bot is alive.
         if text.startswith('/ping'):
             answers = ['Welo', 'Bopo']
-            #return reply(random.choice(answers))
             return bot.send(chat_id, msg=random.choice(answers), reply=message_id)
 
         elif text.startswith('/minecraft'):
-            #return reply(minecraftcheck())
             return bot.send(chat_id, msg=minecraftcheck(), reply=message_id)
     
         # Baraldigen. Generates Baraldi-like sentences about Donne.
@@ -333,12 +314,10 @@ def webhook_handler():
             bar = json.load(open("textdatabase.json"), encoding='utf-8')
             res = "Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) + \
                   " " + random.choice(bar["conjunction"]) + " " + random.choice(bar["metaphor3"])
-            #return reply(res)
             return bot.send(chat_id, msg=res, reply=message_id)
         
         # Eightball. Picks a random answer from the possible 20.
         elif text.startswith('/8ball'):
-            #return reply(eight_ball())
             return bot.send(chat_id, msg=eight_ball(), reply=message_id)
     
         # TapMusic. Sends a collage based on the user's weekly Last.fm charts.
@@ -350,21 +329,17 @@ def webhook_handler():
         # Roll. Throws a dice, or more.
         elif text.startswith('/roll'):
                 if len(text.split()) >= 2:
-                    #return reply(roll(text.split()[1:]))
                     return bot.send(chat_id, msg=roll(text.split()[1:]), reply=message_id)
                 else:
-                    #return reply("Utilizzo: /roll 4d3, /roll 3d5 + 2d3")
                     return bot.send(chat_id, msg="Utilizzo: /roll 4d3, /roll 3d5 + 2d3", reply=message_id)
 
         # Changelog.
         elif text.startswith('/changelog'):
-            #return reply(changelog.logString)
             return bot.send(chat_id, msg=changelog.logString, reply=message_id)
 
         # REPLY COMMANDS
         # Pin the message Petta replied to.
         elif text == '/pin' and int(fr_id) == secrets['bot_admin_id']:
-            #return pinreply()
             return bot.pin(reply_message.get('message_id'), chat_id, False)
 
         elif text == '/cultname' and int(chat_id) == secrets['group_id']:
@@ -379,19 +354,16 @@ def webhook_handler():
     
         # Spongebob mocks the message the user replied to.
         elif text in ['/mock', '/spongemock', '/mockingbob']:
-            #return reply(mock())
             return bot.send(chat_id, msg=mock(), reply=message_id)
 
     # OTHER COMMANDS
     # Classic stream editor.
     elif filtersed():
-        #return reply(sed(), reply_message.get('message_id'))
         return bot.send(chat_id, msg=sed(), reply=message_id)
 
     # Random answer between yes or no.
     elif filteryn():
         answers = ['y', 'n']
-        #return reply(random.choice(answers))
         return bot.send(chat_id, msg=random.choice(answers), reply=message_id)
 
     elif uniformed_text.startswith(("cultbot", "cultrobot", "cult bot", "cult robot")):
@@ -402,7 +374,6 @@ def webhook_handler():
 
     elif text == '!avi':
         if reply_message:
-            #return sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
             return bot.send(chat_id, photo_id=getavatar(reply_message.get('from').get('id')), reply=reply_message.get('message_id'))
 
     # Fallback
@@ -423,9 +394,6 @@ def webhook_handler():
 @app.route('/bopo')
 def bopo_handler():
     try:
-        # TO DO delay = random.randint(10, 7200)
-        # deferred.defer(send, "Bopo", -1001073393308, _countdown=delay)
-        #return send("BOPO", -1001073393308)
         return bot.send(secrets['group_id'], msg="BOPO")
     except Exception as e:
         log(e)
@@ -446,7 +414,6 @@ def peak_handler():
                                                                               'chat_id': str(secrets['group_id']),
                                                                               }).encode("utf-8")).read()
             thischat = json.loads(query)
-            #alert = send('MUSIC MONDAY', -1001073393308)
             alert = bot.send(secrets['group_id'], msg="MUSIC MONDAY")
             # Pins the alert only if there's no current pinned message or it is older than a working day.
             if thischat.get('result').get('pinned_message') is None or (time.mktime(datetime.datetime.now().timetuple()) - thischat.get('result').get('pinned_message').get('date')) > 54000:
