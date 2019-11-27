@@ -5,7 +5,7 @@ cron:
   timezone: Europe/Rome
 - description: peak
   url: /peak
-  schedule: every day 13:00
+  schedule: every day 9:00
   timezone: Europe/Rome
 - description: keepalive
   url: /keepalive

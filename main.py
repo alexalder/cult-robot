@@ -11,16 +11,15 @@ import datetime
 import time
 import sys
 import requests
-
-from google.cloud import datastore
-import google.cloud.exceptions
-
+import traceback
 
 # Standard app engine imports
 from flask import Flask, request, make_response
+from google.cloud import firestore
 
 # Locals
 
+from pettagram.pettagram import Bot
 import changelog
 from cultassistant import CultTextAssistant
 
@@ -28,15 +27,17 @@ from cultassistant import CultTextAssistant
 app = Flask(__name__)
 
 #Datastore
-datastore_client = datastore.Client()
+db = firestore.Client()
 
-telegram_token = datastore_client.get(datastore_client.key("Secret", "telegram_token"))["value"]
-assistant_secret = json.loads(datastore_client.get(datastore_client.key("Secret", "assistant_secret"))["value"])["installed"]
+secrets = db.collection('data').document('secrets').get().to_dict()
+
+#assistant_secret = json.loads(datastore_client.get(datastore_client.key("Secret", "assistant_secret"))["value"])["installed"]
 
 
-BASE_URL = 'https://api.telegram.org/bot' + telegram_token + '/'
+#BASE_URL = 'https://api.telegram.org/bot' + telegram_token + '/'
 
-amazon_tag = "cultbot-21"
+bot = Bot('https://api.telegram.org/bot' + secrets['telegram_token'] + '/')
+#amazon_tag = "cultbot-21"
 
 # Logging
 logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
@@ -44,48 +45,32 @@ logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
 
 def log(e):
     logging.error(e)
-    send("ERROR!:" + e, -1001229811735)
+    #send("ERROR!:" + e, -1001229811735)
+    bot.send(secrets['report_id'], msg="ERROR!:" + e)
 
 
 # Initializing cult assistant
 
-assistant = CultTextAssistant(assistant_secret)
-
+assistant = CultTextAssistant(secrets['assistant_secret']['installed'])
 
 
 # Telegram webhook handling
 @app.route('/me')
 def me_handler():
-    return json.dumps(json.load(urllib.request.urlopen(BASE_URL + 'getMe')))
+    return json.dumps(json.load(urllib.request.urlopen(bot.base_url + 'getMe')))
 
 
 @app.route('/updates')
 def updates_handler():
-    return json.dumps(json.load(urllib.request.urlopen(BASE_URL + 'getUpdates')))
+    return json.dumps(json.load(urllib.request.urlopen(bot.base_url + 'getUpdates')))
 
 
 @app.route('/set_webhook')
 def set_webhook():
     url = request.values.get('url')
     if url:
-        return json.dumps(json.load(urllib.request.urlopen(BASE_URL + 'setWebhook', urllib.parse.urlencode({'url': url}).encode("utf-8"))))
-
-
-# Returns the sent message as JSON
-def send(msg, chat_id):
-    try:
-        resp = urllib.request.urlopen(BASE_URL + 'sendMessage', urllib.parse.urlencode({
-                                                                          'chat_id': str(chat_id),
-                                                                          'text': msg.encode('utf-8'),
-                                                                          'parse_mode': 'Markdown',
-                                                                          'disable_web_page_preview': 'true',
-                                                                          }).encode("utf-8")).read()
-        logging.info('send message:')
-        logging.info(resp)
-    except Exception as e:
-        resp = "Error"
-        log(e)
-    return resp
+        return json.dumps(json.load(urllib.request.urlopen(
+            bot.base_url + 'setWebhook', urllib.parse.urlencode({'url': url}).encode('utf-8'))))
 
 
 # Messages handling
@@ -177,87 +162,83 @@ def webhook_handler():
 
     def askgoogle(query):
         if not assistant.ready:
-            return reply(eight_ball())
+            return bot.send(chat_id, msg=eight_ball(), reply=message_id)
         display_text = assistant.assist(text_query=query)
         if display_text is None:
             if query[-1] == "?":
-                return reply(eight_ball())
+                return bot.send(chat_id, msg=eight_ball(), reply=message_id)
             return make_response('Empty string')
         else:
-            return reply(display_text)
+            display_text = re.sub("google", "CULT", display_text, flags=re.IGNORECASE)
+            return bot.send(chat_id, msg=display_text, reply=message_id)
 
     def minecraftcheck():
         r = requests.get("https://api.mcsrvstat.us/2/93.42.109.78")
         formatted = json.loads(r.text)
-        server_status = "Online" if formatted["online"] else "Offline"
-        onlineppl = formatted["players"]["online"]
-        version = formatted["version"]
+        server_status = "Online" if "players" in formatted else "Offline"
+        version = "N/A"
+        onlineppl = ""
+        if "players" in formatted:
+            version = formatted["version"]
+            onlineppl = formatted["players"]["online"]
         text = "cult.duckdns.org:25565\nServer: " + server_status + "\nGiocatori: " + str(onlineppl) + "\nVersione: " + version
         return text
 
-    def getfile(file_id):
-        query = urllib.request.urlopen(BASE_URL + 'getFile', urllib.parse.urlencode({
-                                                                                                 'file_id': str(file_id),
-                                                                                                 }).encode("utf-8")).read()
-        answer = json.loads(query).get("result")
-        return answer.get('file_path')
-
     def tapmusic(tapusername):
         try:
-            img_data = requests.get("http://tapmusic.net/collage.php?user=" + tapusername + "&type=7day&size=5x5&caption=true&playcount=true").content
+            img_data = requests.get("http://tapmusic.net/collage.php?user=" + tapusername + "&type=7day&size=4x4&caption=true&playcount=true").content
             with open('/tmp/image_name.jpg', 'wb+') as handler:
                 handler.write(img_data)
-            url = BASE_URL + "sendPhoto"
-            files = {'photo': open('/tmp/image_name.jpg', 'rb')}
-            data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
-            requests.post(url, files=files, data=data)
-            return make_response('Successfully got tapmusic')
+
+            bot.send_file(chat_id, photo='/tmp/image_name.jpg', reply=str(message_id))
+            #url = bot.base_url + "sendPhoto"
+            #files = {'photo': open('/tmp/image_name.jpg', 'rb')}
+            #data = {'chat_id': chat_id, 'reply_to_message_id': str(message_id)}
+            #requests.post(url, files=files, data=data)
+
+            return make_response('Successfully got Tapmusic')
         except urllib.error.HTTPError as e:
-            return reply("Errore nella gestione del comando: " + e.read().decode())
+            #return reply("Errore nella gestione del comando: " + e.read().decode())
+            return bot.send(chat_id, msg="Errore nella gestione del comando: " + e.read().decode(), reply=message_id)
         except Exception as e:
-            return reply("Errore nella gestione del comando: " + e)
+            #return reply("Errore nella gestione del comando: " + e)
+            return bot.send(chat_id, msg="Errore nella gestione del comando: " + e, reply=message_id)
 
     def cultphoto(file_id):
         try:
-            file_path = getfile(file_id)
-            full_path = 'https://api.telegram.org/file/bot' + telegram_token + '/' + file_path
+            file_path = bot.get_file(file_id)
+            full_path = 'https://api.telegram.org/file/bot' + secrets['telegram_token'] + '/' + file_path
             img_data = requests.get(full_path).content
             with open('/tmp/image_name.jpg', 'wb+') as handler:
                 handler.write(img_data)
-            url = BASE_URL + "setChatPhoto"
+
+            url = bot.base_url + "setChatPhoto"
             files = {'photo': open('/tmp/image_name.jpg', 'rb')}
             data = {'chat_id': chat_id}
             requests.post(url, files=files, data=data)
+
             return make_response('Successfully updated cult photo')
         except urllib.error.HTTPError as e:
-            return reply("Errore nella gestione del comando: " + e.read().decode())
+            #return reply("Errore nella gestione del comando: " + e.read().decode())
+            return bot.send(chat_id, msg="Errore nella gestione del comando: " + e.read().decode(), reply=message_id)
         except Exception as e:
-            return reply("Errore nella gestione del comando: " + e)
-
-    def pinreply():
-        try:
-            pin = message.get('reply_to_message').get('message_id')
-            res = urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
-                'chat_id': str(chat_id),
-                'message_id': str(pin),
-                'disable_notification': 'true', }).encode("utf-8")).read()
-            return res
-        except Exception:
-            reply("Rispondi a un messaggio, silly petta!")
+            #return reply("Errore nella gestione del comando: " + e)
+            return bot.send(chat_id, msg="Errore nella gestione del comando: " + e, reply=message_id)
 
     def cultname(newname):
         try:
             fullname = 'CULT - ' + str(newname)
-            res = urllib.request.urlopen(BASE_URL + 'setChatTitle', urllib.parse.urlencode({
+            res = urllib.request.urlopen(bot.base_url + 'setChatTitle', urllib.parse.urlencode({
                 'chat_id': str(chat_id),
                 'title': fullname, }).encode("utf-8")).read()
             return res
         except Exception as e:
             logging.info(e)
-            return reply("Errore nel cambio del nome")
+            #return reply("Errore nel cambio del nome")
+            return bot.send(chat_id, msg="Errore nel cambio del nome", reply=message_id)
 
     def getavatar(user_id):
-        query = urllib.request.urlopen(BASE_URL + 'getUserProfilePhotos', urllib.parse.urlencode({
+        query = urllib.request.urlopen(bot.base_url + 'getUserProfilePhotos', urllib.parse.urlencode({
             'user_id': str(user_id),
         }).encode("utf-8")).read()
         answer = json.loads(query).get("result")
@@ -266,26 +247,6 @@ def webhook_handler():
         if photo_array:
             last_photo = photo_array[0][0].get('file_id')
         return last_photo
-
-    def sendphoto(file_id, reply_to=None):
-        try:
-            if not file_id:
-                resp = make_response('Photo is null')
-                logging.info('Photo is null')
-            else:
-                resp = urllib.request.urlopen(BASE_URL + 'sendPhoto', urllib.parse.urlencode({
-                    'chat_id': str(chat_id),
-                    'photo': file_id,
-                    'parse_mode': 'Markdown',
-                    'reply_to_message_id': str(reply_to),
-                }).encode("utf-8")).read()
-                logging.info('send photo:')
-                logging.info(resp)
-        except Exception as e:
-            resp = make_response('Error sending photo', 400)
-            log(e)
-        finally:
-            return resp
     
     def filterref():
         patterns = '/dp|/gp/product|amzn'
@@ -301,7 +262,8 @@ def webhook_handler():
             r = requests.head(link, allow_redirects=True)
             return reflink(r.url)
         if product_code:
-            return reply("http://www.amazon.it/dp/" + product_code + "/?tag=" + amazon_tag)
+            #return reply("http://www.amazon.it/dp/" + product_code + "/?tag=" + amazon_tag)
+            return bot.send(chat_id, msg="http://www.amazon.it/dp/" + product_code + "/?tag=" + secrets['amazon_tag'], reply=message_id)
 
     def roll(rolls):
         output = ""
@@ -353,49 +315,31 @@ def webhook_handler():
         except Exception:
             return "sintassi errata!"
 
-    # Quick message reply function.
-    def reply(msg, replying=str(message_id)):
-        try:
-            logging.info('Send response text and request:')
-
-            if msg and not msg.isspace() and len(msg) < 4096:
-                logging.info(repr(msg))
-                resp = urllib.request.urlopen(BASE_URL + 'sendMessage', urllib.parse.urlencode({
-                    'chat_id': str(chat_id),
-                    'text': msg.encode('utf-8'),
-                    'disable_web_page_preview': 'true',
-                    'reply_to_message_id': replying,
-                }).encode("utf-8")).read()
-
-                logging.info(resp)
-            else:
-                resp = make_response('Empty string')
-
-        except Exception:
-            resp = ('Exception in reply', 400)
-        finally:
-            return resp
-
     if text.startswith('/'):
 
         # OFFICIAL COMMANDS
         # Check if bot is alive.
         if text.startswith('/ping'):
             answers = ['Welo', 'Bopo']
-            return reply(random.choice(answers))
+            #return reply(random.choice(answers))
+            return bot.send(chat_id, msg=random.choice(answers), reply=message_id)
 
         elif text.startswith('/minecraft'):
-            return reply(minecraftcheck())
+            #return reply(minecraftcheck())
+            return bot.send(chat_id, msg=minecraftcheck(), reply=message_id)
     
         # Baraldigen. Generates Baraldi-like sentences about Donne.
         elif text.startswith('/baraldi'):
             bar = json.load(open("textdatabase.json"), encoding='utf-8')
-            return reply("Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) +
-                         " " + random.choice(bar["conjunction"]) + " " + random.choice(bar["metaphor3"]))
+            res = "Le donne sono come " + random.choice(bar["metaphor1"]) + ": " + random.choice(bar["metaphor2"]) + \
+                  " " + random.choice(bar["conjunction"]) + " " + random.choice(bar["metaphor3"])
+            #return reply(res)
+            return bot.send(chat_id, msg=res, reply=message_id)
         
         # Eightball. Picks a random answer from the possible 20.
         elif text.startswith('/8ball'):
-            return reply(eight_ball())
+            #return reply(eight_ball())
+            return bot.send(chat_id, msg=eight_ball(), reply=message_id)
     
         # TapMusic. Sends a collage based on the user's weekly Last.fm charts.
         elif text.startswith('/tapmusic'):
@@ -406,24 +350,28 @@ def webhook_handler():
         # Roll. Throws a dice, or more.
         elif text.startswith('/roll'):
                 if len(text.split()) >= 2:
-                    return reply(roll(text.split()[1:]))
+                    #return reply(roll(text.split()[1:]))
+                    return bot.send(chat_id, msg=roll(text.split()[1:]), reply=message_id)
                 else:
-                    return reply("Utilizzo: /roll 4d3, /roll 3d5 + 2d3")
+                    #return reply("Utilizzo: /roll 4d3, /roll 3d5 + 2d3")
+                    return bot.send(chat_id, msg="Utilizzo: /roll 4d3, /roll 3d5 + 2d3", reply=message_id)
 
         # Changelog.
         elif text.startswith('/changelog'):
-            return reply(changelog.logString)
+            #return reply(changelog.logString)
+            return bot.send(chat_id, msg=changelog.logString, reply=message_id)
 
         # REPLY COMMANDS
         # Pin the message Petta replied to.
-        elif text == '/pin' and int(fr_id) == 178593329:
-            return pinreply()
+        elif text == '/pin' and int(fr_id) == secrets['bot_admin_id']:
+            #return pinreply()
+            return bot.pin(reply_message.get('message_id'), chat_id, False)
 
-        elif text == '/cultname' and int(chat_id) == -1001073393308:
+        elif text == '/cultname' and int(chat_id) == secrets['group_id']:
             if reply_text and len(reply_text) <= 25:
                 return cultname(reply_text)
 
-        elif text == '/cultphoto' and int(chat_id) == -1001073393308:
+        elif text == '/cultphoto' and int(chat_id) == secrets['group_id']:
             if reply_message is not None:
                 if reply_message.get('photo') is not None:
                     photo_id = reply_message.get('photo')[-1].get('file_id')
@@ -431,17 +379,20 @@ def webhook_handler():
     
         # Spongebob mocks the message the user replied to.
         elif text in ['/mock', '/spongemock', '/mockingbob']:
-            return reply(mock())
+            #return reply(mock())
+            return bot.send(chat_id, msg=mock(), reply=message_id)
 
     # OTHER COMMANDS
     # Classic stream editor.
     elif filtersed():
-        return reply(sed(), reply_message.get('message_id'))
+        #return reply(sed(), reply_message.get('message_id'))
+        return bot.send(chat_id, msg=sed(), reply=message_id)
 
     # Random answer between yes or no.
     elif filteryn():
         answers = ['y', 'n']
-        return reply(random.choice(answers))
+        #return reply(random.choice(answers))
+        return bot.send(chat_id, msg=random.choice(answers), reply=message_id)
 
     elif uniformed_text.startswith(("cultbot", "cultrobot", "cult bot", "cult robot")):
         if len(text.split('ot', 1)) == 2:
@@ -451,7 +402,8 @@ def webhook_handler():
 
     elif text == '!avi':
         if reply_message:
-            return sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
+            #return sendphoto(getavatar(reply_message.get('from').get('id')), reply_message.get('message_id'))
+            return bot.send(chat_id, photo_id=getavatar(reply_message.get('from').get('id')), reply=reply_message.get('message_id'))
 
     # Fallback
     else:
@@ -459,7 +411,7 @@ def webhook_handler():
                 return reflink(text)
         else:
             if reply_message is not None:
-                if reply_message.get('from').get('id') == 587688480:
+                if reply_message.get('from').get('id') == secrets['bot_id']:
                     if text.endswith('?'):
                         if 0 < len(text) < 100:
                             return askgoogle(text)
@@ -473,7 +425,8 @@ def bopo_handler():
     try:
         # TO DO delay = random.randint(10, 7200)
         # deferred.defer(send, "Bopo", -1001073393308, _countdown=delay)
-        return send("BOPO", -1001073393308)
+        #return send("BOPO", -1001073393308)
+        return bot.send(secrets['group_id'], msg="BOPO")
     except Exception as e:
         log(e)
 
@@ -489,17 +442,15 @@ def peak_handler():
     try:
         # Music Monday.
         if datetime.datetime.today().weekday() == 0:
-            query = urllib.request.urlopen(BASE_URL + 'getChat', urllib.parse.urlencode({
-                                                                              'chat_id': str(-1001073393308),
+            query = urllib.request.urlopen(bot.base_url + 'getChat', urllib.parse.urlencode({
+                                                                              'chat_id': str(secrets['group_id']),
                                                                               }).encode("utf-8")).read()
             thischat = json.loads(query)
-            alert = send('MUSIC MONDAY', -1001073393308)
+            #alert = send('MUSIC MONDAY', -1001073393308)
+            alert = bot.send(secrets['group_id'], msg="MUSIC MONDAY")
             # Pins the alert only if there's no current pinned message or it is older than a working day.
             if thischat.get('result').get('pinned_message') is None or (time.mktime(datetime.datetime.now().timetuple()) - thischat.get('result').get('pinned_message').get('date')) > 54000:
-                return urllib.request.urlopen(BASE_URL + 'pinChatMessage', urllib.parse.urlencode({
-                                                                              'chat_id': str(-1001073393308),
-                                                                              'message_id': str(json.loads(alert).get('result').get('message_id')),
-                                                                              'disable_notification': 'true', }).encode("utf-8")).read()
+                return bot.pin(str(json.loads(alert).get('result').get('message_id')), str(secrets['group_id']), False)
         return make_response('Peak hour handled')
     except Exception as e:
         log(e)
