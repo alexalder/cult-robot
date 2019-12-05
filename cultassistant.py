@@ -8,6 +8,9 @@ import google.oauth2.credentials
 
 import assistant_helpers
 
+from google.auth import app_engine
+import googleapiclient.discovery
+
 
 class CultTextAssistant(object):
     """Sample Assistant that supports text based conversations.
@@ -22,10 +25,9 @@ class CultTextAssistant(object):
 
     def __init__(self, secret, language_code="it-IT", device_model_id="cult-robot-telegram", device_id="cult-robot-telegram-app", deadline_sec=185):
         try:
-            credentials = google.oauth2.credentials.Credentials(token=None, token_uri=secret.get('token_uri'),
-                                                                client_id=secret.get('client_id'),
-                                                                client_secret=secret.get('client_secret'),
-                                                                refresh_token=secret.get('refresh_token'))
+            credentials = app_engine.Credentials()
+
+#            credentials = google.oauth2.credentials.Credentials(token=None, token_uri=secret.get('token_uri'), client_id=secret.get('client_id'), client_secret=secret.get('client_secret'), refresh_token=secret.get('refresh_token'))
             http_request = google.auth.transport.requests.Request()
             credentials.refresh(http_request)
             grpc_channel = google.auth.transport.grpc.secure_authorized_channel(
