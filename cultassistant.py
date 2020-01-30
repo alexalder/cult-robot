@@ -25,11 +25,12 @@ class CultTextAssistant(object):
 
     def __init__(self, secret, language_code="it-IT", device_model_id="cult-robot-telegram", device_id="cult-robot-telegram-app", deadline_sec=185):
         try:
-            credentials = app_engine.Credentials()
+            #credentials, project = google.auth.default(scopes=['https://www.googleapis.com/auth/assistant-sdk-prototype'])
 
-#            credentials = google.oauth2.credentials.Credentials(token=None, token_uri=secret.get('token_uri'), client_id=secret.get('client_id'), client_secret=secret.get('client_secret'), refresh_token=secret.get('refresh_token'))
+            credentials = google.oauth2.credentials.Credentials(token=None, token_uri=secret.get('token_uri'), client_id=secret.get('client_id'), client_secret=secret.get('client_secret'), refresh_token=secret.get('refresh_token'))
+            #credentials = google.oauth2.credentials.Credentials(token=None, token_uri=secret.get('token_uri'), client_id=secret.get('client_id'), client_secret=secret.get('client_secret'))
             http_request = google.auth.transport.requests.Request()
-            credentials.refresh(http_request)
+            #credentials.refresh(http_request)
             grpc_channel = google.auth.transport.grpc.secure_authorized_channel(
                 credentials, http_request, 'embeddedassistant.googleapis.com')
             self.device_model_id = device_model_id
