@@ -79,7 +79,7 @@ def webhook_handler():
         if not message:
             message = body['edited_message']
         text = message.get('text')
-        is_forward = message.get('forward_from')
+        is_forward = 'forward_date' in message
     except:
         logging.info('unhandled message')
         return json.dumps(body)
