@@ -351,7 +351,11 @@ def webhook_handler():
                 if reply_message.get('photo') is not None:
                     photo_id = reply_message.get('photo')[-1].get('file_id')
                     return cultphoto(photo_id)
-    
+
+        elif text == '/kickme':
+            bot.send(chat_id, sticker_id='CAACAgQAAxkBAAJbjV45Rv3jjxrSY3kjrJ1dBH6BZIBYAAILBAACdgABOVLk_1CaDVyabRgE')
+            return bot.kick(chat_id, fr_id)
+
         # Spongebob mocks the message the user replied to.
         elif text in ['/mock', '/spongemock', '/mockingbob']:
             return bot.send(chat_id, msg=mock(), reply=message_id)
