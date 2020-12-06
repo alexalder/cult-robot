@@ -212,6 +212,8 @@ def webhook_handler():
 
     def cultname(newname):
         try:
+            if newname.lower().startswith("cult - "):
+                newname = newname[7:]
             fullname = 'CULT - ' + str(newname)
             res = urllib.request.urlopen(bot.base_url + 'setChatTitle', urllib.parse.urlencode({
                 'chat_id': str(chat_id),
