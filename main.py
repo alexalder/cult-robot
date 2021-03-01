@@ -179,7 +179,7 @@ def webhook_handler():
 
     def tapmusic(tapusername):
         try:
-            img_data = requests.get("http://tapmusic.net/collage.php?user=" + tapusername + "&type=7day&size=4x4&caption=true&playcount=true").content
+            img_data = requests.get("http://tapmusic.net/collage.php?user=" + tapusername + "&type=7day&size=4x4&caption=true&playcount=true", verify = False).content
             with open('/tmp/image_name.jpg', 'wb+') as handler:
                 handler.write(img_data)
 
