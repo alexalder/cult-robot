@@ -189,7 +189,7 @@ def webhook_handler():
         except urllib.error.HTTPError as e:
             return bot.send(chat_id, msg="Errore nella gestione del comando: " + e.read().decode(), reply=message_id)
         except Exception as e:
-            return bot.send(chat_id, msg="Errore nella gestione del comando: " + e, reply=message_id)
+            return bot.send(chat_id, msg="Errore nella gestione del comando: " + str(e), reply=message_id)
 
     def cultphoto(file_id):
         try:
